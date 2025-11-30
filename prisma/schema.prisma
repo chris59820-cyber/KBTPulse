@@ -1,0 +1,1101 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id                String    @id @default(cuid())
+  identifiant       String    @unique
+  motDePasse        String // hash du mot de passe
+  email             String?   @unique
+  nom               String?
+  prenom            String?
+  role              String    @default("AUTRE") // PREPA, CE, RDC, CAFF, RH, AUTRE, ADMIN
+  salarieId         String?   @unique // Lien optionnel avec un salarié
+  actif             Boolean   @default(true)
+  derniereConnexion DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  salarie Salarie? @relation(fields: [salarieId], references: [id], onDelete: SetNull)
+
+  @@map("users")
+}
+
+model Salarie {
+  id            String    @id @default(cuid())
+  nom           String
+  prenom        String
+  dateNaissance DateTime?
+  email         String?   @unique
+  telephone     String?
+  adresse       String?
+  photoUrl      String? // URL de la photo
+  poste         String
+  fonction      String? // Fonction du salarié
+  metier        String? // Métier du salarié
+  coefficient   Float?
+  matricule     String?   @unique
+  dateEmbauche  DateTime  @default(now())
+  typeContrat   String? // CDI, CDD, ETT
+  tauxHoraire   Float?
+  deplacement   Float? // Calcul automatique des KM
+  niveauAcces   String? // PREPA, CE, RDC, CAFF, OUVRIER, AUTRE
+  statut        String    @default("actif") // actif, inactif, congé
+  perimetreId   String? // Périmètre d'affectation
+  rdcId         String? // RDC responsable
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  interventions            Intervention[]
+  interventionsResponsable Intervention[]            @relation("InterventionResponsable")
+  interventionsRDC         Intervention[]            @relation("InterventionRDC")
+  affectations             AffectationPlanning[]
+  affectationsIntervention AffectationIntervention[]
+  user                     User?
+  pointages                Pointage[]
+  horaires                 Horaire[]
+  salariePerimetres        SalariePerimetre[]
+  affectationsPersonnel    AffectationPersonnel[]
+  habilitations            Habilitation[]
+  autorisations            Autorisation[]
+  visitesMedicales         VisiteMedicale[]
+  restrictionsMedicales    RestrictionMedicale[]
+  competences              Competence[]
+  conges                   Conge[]
+  contactsUrgence          ContactUrgence[]
+  materielFourni           MaterielFourni[]
+  enginsConfies            EnginConfie[]
+  materielAttribue         MaterielAttribue[]
+  documentsPersonnels      DocumentPersonnel[]
+  formationsSalarie        FormationSalarie[]
+  accesSitesClients        AccesSiteClient[]
+  affectationsVehicule     AffectationVehicule[]
+  evaluations              Evaluation[]
+  evenementsRH             EvenementRH[]
+  vehiculesRDC             Vehicule[]                @relation("VehiculeRDC")
+  codesAffaireRDC          CodeAffaire[]             @relation("CodeAffaireRDC")
+  chantiersRDC             Chantier[]                @relation("ChantierRDC")
+
+  @@map("salaries")
+}
+
+model Competence {
+  id              String    @id @default(cuid())
+  salarieId       String
+  nom             String
+  niveau          String? // debutant, intermediaire, avance, expert
+  dateAcquisition DateTime?
+  description     String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  salarie Salarie @relation(fields: [salarieId], references: [id], onDelete: Cascade)
+
+  @@map("competences")
+}
+
+model Habilitation {
+  id             String    @id @default(cuid())
+  salarieId      String
+  nom            String
+  numero         String?
+  dateObtention  DateTime
+  dateExpiration DateTime?
+  organisme      String?
+  fichierUrl     String? // URL du fichier/document
+  actif          Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  salarie Salarie @relation(fields: [salarieId], references: [id], onDelete: Cascade)
+
+  @@map("habilitations")
+}
+
+model Autorisation {
+  id             String    @id @default(cuid())
+  salarieId      String
+  nom            String
+  numero         String?
+  dateObtention  DateTime
+  dateExpiration DateTime?
+  organisme      String?
+  fichierUrl     String? // URL du fichier/document
+  actif          Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  salarie Salarie @relation(fields: [salarieId], references: [id], onDelete: Cascade)
+
+  @@map("autorisations")
+}
+
+model VisiteMedicale {
+  id            String    @id @default(cuid())
+  salarieId     String
+  dateVisite    DateTime
+  dateProchaine DateTime?
+  medecin       String?
+  resultat      String? // apte, inapte, apte_avec_restriction
+  commentaire   String?
+  fichierUrl    String? // URL du certificat médical
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  salarie Salarie @relation(fields: [salarieId], references: [id], onDelete: Cascade)
+
+  @@map("visites_medicales")
+}
+
+model RestrictionMedicale {
+  id          String    @id @default(cuid())
+  salarieId   String
+  type        String // restriction_temporaire, restriction_permanente, contre_indication
+  description String
+  dateDebut   DateTime
+  dateFin     DateTime?
+  medecin     String?
+  actif       Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  salarie Salarie @relation(fields: [salarieId], references: [id], onDelete: Cascade)
+
+  @@map("restrictions_medicales")
+}
+
+model Publication {
+  id               String    @id @default(cuid())
+  titre            String
+  contenu          String
+  imageUrl         String?
+  auteurId         String? // ID de l'utilisateur qui a créé la publication
+  profilsAutorises String? // Profils autorisés à voir: RDC,CAFF,AUTRE
+  publique         Boolean   @default(false) // Si true, visible par tous les ouvriers
+  perimetreId      String?
+  datePublication  DateTime  @default(now())
+  dateExpiration   DateTime?
+  actif            Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  perimetre Perimetre? @relation(fields: [perimetreId], references: [id], onDelete: SetNull)
+
+  @@map("publications")
+}
+
+model Conge {
+  id                    String    @id @default(cuid())
+  salarieId             String
+  type                  String // CP, RTT, Repos, RC, RL, EF
+  dateDebut             DateTime
+  dateFin               DateTime
+  dureeJours            Float?
+  dureeHeures           Float?
+  commentaire           String?
+  statut                String    @default("en_attente") // en_attente, valide, refuse, annule
+  commentaireValidation String?
+  validePar             String? // ID de l'utilisateur qui a validé
+  dateValidation        DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  salarie Salarie @relation(fields: [salarieId], references: [id], onDelete: Cascade)
+
+  @@map("conges")
+}
+
+model ContactUrgence {
+  id                  String   @id @default(cuid())
+  salarieId           String
+  nom                 String
+  prenom              String
+  relation            String? // Conjoint, Parent, Ami, etc.
+  telephone           String
+  telephoneSecondaire String?
+  email               String?
+  priorite            Int      @default(1) // 1 = principal, 2 = secondaire, etc.
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  salarie Salarie @relation(fields: [salarieId], references: [id], onDelete: Cascade)
+
+  @@map("contacts_urgence")
+}
+
+model MaterielFourni {
+  id          String   @id @default(cuid())
+  salarieId   String
+  type        String // lampe_frontale, perceuse_batterie, masque_fuite, stop_chute, visseuse, masque_catec, gilet_sauvetage, telephone, talkie_walkie
+  dateFourni  DateTime @default(now())
+  etat        String   @default("bon") // bon, usage, degrade, perdu
+  commentaire String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  salarie Salarie @relation(fields: [salarieId], references: [id], onDelete: Cascade)
+
+  @@map("materiel_fourni")
+}
+
+model EnginConfie {
+  id                      String    @id @default(cuid())
+  salarieId               String
+  type                    String // Voiture, Camion, Engin
+  marque                  String?
+  modele                  String?
+  immatriculation         String
+  dateAttribution         DateTime  @default(now())
+  dateRestitution         DateTime?
+  photoAttribution        String? // URL photo lors de l'attribution
+  ficheConstatAttribution String? // URL fiche constat attribution
+  photoRestitution        String? // URL photo lors de la restitution
+  ficheConstatRestitution String? // URL fiche constat restitution
+  commentaire             String?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  salarie Salarie @relation(fields: [salarieId], references: [id], onDelete: Cascade)
+
+  @@map("engins_confies")
+}
+
+model MaterielAttribue {
+  id              String    @id @default(cuid())
+  salarieId       String
+  type            String // cle_echafaudage, marteau, caisse_calorifuge, harnais, detecteur_4_gaz, ceinture_porte_outil, chaussures_securite, masque_gvs
+  reference       String? // Référence pour détecteur 4 gaz, etc.
+  pointure        String? // Pour chaussures de sécurité
+  dateAttribution DateTime  @default(now())
+  dateRestitution DateTime?
+  etat            String    @default("bon") // bon, usage, degrade, perdu
+  commentaire     String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  salarie Salarie @relation(fields: [salarieId], references: [id], onDelete: Cascade)
+
+  @@map("materiel_attribue")
+}
+
+model DocumentPersonnel {
+  id             String    @id @default(cuid())
+  salarieId      String
+  type           String // carte_identite, passeport, permis_conduire, carte_grise
+  numero         String?
+  dateEmission   DateTime?
+  dateExpiration DateTime?
+  fichierUrl     String? // URL du document
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  salarie Salarie @relation(fields: [salarieId], references: [id], onDelete: Cascade)
+
+  @@map("documents_personnels")
+}
+
+model FormationSalarie {
+  id             String    @id @default(cuid())
+  salarieId      String
+  nom            String
+  organisme      String?
+  dateFormation  DateTime
+  dateExpiration DateTime?
+  duree          Float? // En heures
+  fichierUrl     String? // URL du certificat/attestation
+  commentaire    String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  salarie Salarie @relation(fields: [salarieId], references: [id], onDelete: Cascade)
+
+  @@map("formations_salarie")
+}
+
+model AccesSiteClient {
+  id             String    @id @default(cuid())
+  salarieId      String
+  nomSite        String
+  client         String?
+  dateObtention  DateTime
+  dateExpiration DateTime?
+  fichierUrl     String? // URL du document d'accès
+  commentaire    String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  salarie Salarie @relation(fields: [salarieId], references: [id], onDelete: Cascade)
+
+  @@map("acces_sites_clients")
+}
+
+model Chantier {
+  id                    String    @id @default(cuid())
+  nom                   String
+  adresse               String?
+  description           String?
+  clientId              String? // Client du chantier
+  dateDebut             DateTime?
+  dateFin               DateTime?
+  budget                Float?
+  statut                String    @default("planifie") // planifie, en_attente, en_cours, termine, annule
+  rdcId                 String? // RDC responsable du chantier
+  codeAffaireId         String?   @unique // Code affaire principal du chantier
+  site                  String? // Site du chantier
+  secteur               String? // Secteur du chantier
+  numeroCommande        String? // Numéro de commande
+  donneurOrdreId        String? // Donneur d'ordre du chantier
+  // Champs de compatibilité (à supprimer après migration)
+  clientOld             String?   @map("client_old")
+  donneurOrdreNom       String?   @map("donneur_ordre_nom_old")
+  donneurOrdreTelephone String?   @map("donneur_ordre_telephone_old")
+  donneurOrdreEmail     String?   @map("donneur_ordre_email_old")
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  client        Client?               @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  rdc           Salarie?              @relation("ChantierRDC", fields: [rdcId], references: [id], onDelete: SetNull)
+  codeAffaire   CodeAffaire?          @relation("ChantierCodeAffaire", fields: [codeAffaireId], references: [id], onDelete: SetNull)
+  donneurOrdre  DonneurOrdre?         @relation("ChantierDonneurOrdre", fields: [donneurOrdreId], references: [id], onDelete: SetNull)
+  interventions Intervention[]
+  affectations  AffectationPlanning[]
+  codesAffaire  CodeAffaire[]         @relation("CodeAffaireChantier")
+
+  @@map("chantiers")
+}
+
+model Intervention {
+  id                    String    @id @default(cuid())
+  titre                 String
+  description           String?
+  dateDebut             DateTime?
+  dateFin               DateTime?
+  dateDebutReelle       DateTime? // Date et heure de début réelle
+  dateFinReelle         DateTime? // Date et heure de fin réelle
+  duree                 Float? // en heures (prévue)
+  dureeReelle           Float? // en heures (réellement passée)
+  tempsPrevu            Float? // Temps prévu pour réaliser l'intervention
+  avancement            Int       @default(0) // Pourcentage d'avancement (0-100)
+  statut                String    @default("planifiee") // planifiee, en_attente, en_cours, diagnostique, terminee, annulee
+  type                  String? // echafaudage, calorifuge, autre
+  nature                String? // pose, depose
+  secteur               String? // Secteur d'intervention
+  usine                 String? // Usine
+  latitude              Float? // Coordonnées GPS
+  longitude             Float?
+  montantTotal          Float? // Montant total de l'intervention
+  montantResteAFaire    Float? // Montant du reste à faire
+  retexPositifs         String? // Retour d'expérience - points positifs
+  retexNegatifs         String? // Retour d'expérience - points négatifs
+  metier                String? // Métier concerné
+  rdcId                 String? // RDC responsable
+  responsableId         String? // Responsable de l'intervention
+  codeAffaireId         String? // Code affaire lié à l'intervention
+  donneurOrdreId        String? // Donneur d'ordre de l'intervention
+  chantierId            String
+  // Champs de compatibilité (à supprimer après migration)
+  donneurOrdreNom       String?   @map("donneur_ordre_nom_old")
+  donneurOrdreTelephone String?   @map("donneur_ordre_telephone_old")
+  donneurOrdreEmail     String?   @map("donneur_ordre_email_old")
+  salarieId             String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  chantier                 Chantier                  @relation(fields: [chantierId], references: [id], onDelete: Cascade)
+  salarie                  Salarie?                  @relation(fields: [salarieId], references: [id], onDelete: SetNull)
+  responsable              Salarie?                  @relation("InterventionResponsable", fields: [responsableId], references: [id], onDelete: SetNull)
+  rdc                      Salarie?                  @relation("InterventionRDC", fields: [rdcId], references: [id], onDelete: SetNull)
+  codeAffaire              CodeAffaire?              @relation("InterventionCodeAffaire", fields: [codeAffaireId], references: [id], onDelete: SetNull)
+  donneurOrdre             DonneurOrdre?             @relation("InterventionDonneurOrdre", fields: [donneurOrdreId], references: [id], onDelete: SetNull)
+  materielUtilise          MaterielUtilise[]
+  documentsIntervention    DocumentIntervention[]
+  affectationsIntervention AffectationIntervention[]
+  ressourcesIntervention   RessourceIntervention[]
+  photosIntervention       PhotoIntervention[]
+  autoControles            AutoControle[]
+  messagesIntervention     MessageIntervention[]
+  checklistSecurite        ChecklistSecurite?
+  affectationsVehicule     AffectationVehicule[]
+
+  @@map("interventions")
+}
+
+model Materiel {
+  id           String   @id @default(cuid())
+  nom          String
+  description  String?
+  categorie    String // outillage, vehicule, machine, consommable
+  quantite     Int      @default(1)
+  unite        String   @default("unité")
+  prixUnitaire Float?
+  statut       String   @default("disponible") // disponible, en_utilisation, maintenance, hors_service
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  utilisations MaterielUtilise[]
+  codeAffaire  String? // Code affaire pour le pointage
+
+  @@map("materiels")
+}
+
+model MaterielUtilise {
+  id              String    @id @default(cuid())
+  quantite        Int       @default(1)
+  dateDebut       DateTime
+  dateFin         DateTime?
+  valide          Boolean   @default(false)
+  restitue        Boolean   @default(false)
+  dateValidation  DateTime?
+  dateRestitution DateTime?
+  commentaire     String?
+  interventionId  String
+  materielId      String
+  createdAt       DateTime  @default(now())
+
+  intervention Intervention @relation(fields: [interventionId], references: [id], onDelete: Cascade)
+  materiel     Materiel     @relation(fields: [materielId], references: [id], onDelete: Cascade)
+
+  @@map("materiel_utilise")
+}
+
+model DocumentIntervention {
+  id             String    @id @default(cuid())
+  interventionId String
+  type           String // plan, photo, pdp, liste, mos, autre
+  nom            String
+  description    String?
+  fichierUrl     String? // URL du document
+  signe          Boolean   @default(false)
+  signataire     String? // Nom du signataire
+  dateSignature  DateTime?
+  peutEcrire     Boolean   @default(false) // Possibilité d'écrire sur le document
+  contenu        String? // Contenu du document si éditable
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  intervention Intervention @relation(fields: [interventionId], references: [id], onDelete: Cascade)
+
+  @@map("documents_intervention")
+}
+
+model AffectationIntervention {
+  id             String    @id @default(cuid())
+  interventionId String
+  salarieId      String
+  role           String    @default("ouvrier") // chef_equipe, ouvrier
+  dateDebut      DateTime  @default(now())
+  dateFin        DateTime?
+  actif          Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  intervention Intervention @relation(fields: [interventionId], references: [id], onDelete: Cascade)
+  salarie      Salarie      @relation(fields: [salarieId], references: [id], onDelete: Cascade)
+
+  @@unique([interventionId, salarieId])
+  @@map("affectations_intervention")
+}
+
+model RessourceIntervention {
+  id              String    @id @default(cuid())
+  interventionId  String
+  type            String // outillage, fourniture, epi, vehicule, engin
+  nom             String
+  description     String?
+  quantite        Int       @default(1)
+  reference       String?
+  valide          Boolean   @default(false)
+  restitue        Boolean   @default(false)
+  dateValidation  DateTime?
+  dateRestitution DateTime?
+  commentaire     String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  intervention Intervention @relation(fields: [interventionId], references: [id], onDelete: Cascade)
+
+  @@map("ressources_intervention")
+}
+
+model PhotoIntervention {
+  id             String   @id @default(cuid())
+  interventionId String
+  url            String
+  description    String?
+  auteurId       String? // ID du salarié qui a ajouté la photo
+  createdAt      DateTime @default(now())
+
+  intervention Intervention @relation(fields: [interventionId], references: [id], onDelete: Cascade)
+
+  @@map("photos_intervention")
+}
+
+model AutoControle {
+  id               String    @id @default(cuid())
+  interventionId   String
+  element          String // Élément à contrôler suivant la liste
+  verifie          Boolean   @default(false)
+  commentaire      String?
+  verifiePar       String? // ID du salarié qui a vérifié
+  dateVerification DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  intervention Intervention @relation(fields: [interventionId], references: [id], onDelete: Cascade)
+
+  @@map("auto_controles")
+}
+
+model MessageIntervention {
+  id             String   @id @default(cuid())
+  interventionId String
+  auteurId       String // ID du salarié auteur
+  contenu        String
+  lu             Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  intervention Intervention @relation(fields: [interventionId], references: [id], onDelete: Cascade)
+
+  @@map("messages_intervention")
+}
+
+model ChecklistSecurite {
+  id             String    @id @default(cuid())
+  interventionId String    @unique
+  elements       String // JSON ou texte avec les éléments de la checklist
+  completee      Boolean   @default(false)
+  completeePar   String? // ID du salarié qui a complété
+  dateCompletion DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  intervention Intervention @relation(fields: [interventionId], references: [id], onDelete: Cascade)
+
+  @@map("checklist_securite")
+}
+
+model AffectationPlanning {
+  id          String   @id @default(cuid())
+  date        DateTime
+  heureDebut  String? // Format HH:mm
+  heureFin    String? // Format HH:mm
+  salarieId   String
+  chantierId  String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  salarie  Salarie  @relation(fields: [salarieId], references: [id], onDelete: Cascade)
+  chantier Chantier @relation(fields: [chantierId], references: [id], onDelete: Cascade)
+
+  @@map("affectations_planning")
+}
+
+model Perimetre {
+  id          String   @id @default(cuid())
+  nom         String
+  adresse     String
+  ville       String?
+  codePostal  String?
+  latitude    Float? // Coordonnées GPS du site
+  longitude   Float?
+  description String?
+  actif       Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  actualites        Actualite[]
+  messagesSecurite  MessageSecurite[]
+  pointages         Pointage[]
+  salariePerimetres SalariePerimetre[]
+  usines            Usine[]
+  structures        StructureOrganisationnelle[]
+  publications      Publication[]
+
+  @@map("perimetres")
+}
+
+model Actualite {
+  id              String   @id @default(cuid())
+  titre           String
+  description     String?
+  contenu         String?
+  imageUrl        String? // URL de l'image/photo principale
+  images          String? // JSON array d'URLs d'images supplémentaires
+  perimetreId     String?
+  auteurId        String?
+  publie          Boolean  @default(true)
+  datePublication DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  perimetre Perimetre? @relation(fields: [perimetreId], references: [id], onDelete: SetNull)
+
+  @@map("actualites")
+}
+
+model MessageSecurite {
+  id          String    @id @default(cuid())
+  titre       String
+  contenu     String
+  type        String    @default("info") // info, warning, danger, success
+  imageUrl    String? // URL de l'image/photo
+  perimetreId String?
+  actif       Boolean   @default(true)
+  dateDebut   DateTime  @default(now())
+  dateFin     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  perimetre Perimetre? @relation(fields: [perimetreId], references: [id], onDelete: SetNull)
+
+  @@map("messages_securite")
+}
+
+model Conversation {
+  id        String   @id @default(cuid())
+  nom       String?
+  type      String   @default("prive") // prive, groupe, equipe
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  participants ConversationParticipant[]
+  messages     Message[]
+
+  @@map("conversations")
+}
+
+model ConversationParticipant {
+  id             String   @id @default(cuid())
+  conversationId String
+  userId         String
+  salarieId      String?
+  joinedAt       DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+  @@map("conversation_participants")
+}
+
+model Message {
+  id             String   @id @default(cuid())
+  conversationId String
+  userId         String?
+  salarieId      String?
+  contenu        String
+  lu             Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@map("messages")
+}
+
+model Pointage {
+  id            String   @id @default(cuid())
+  salarieId     String
+  perimetreId   String?
+  codeAffaireId String? // Code affaire pour le pointage
+  date          DateTime
+  heureArrivee  String?
+  heureDepart   String?
+  nombreHeures  Float? // Nombre d'heures travaillées
+  deplacement   Float? // KM de déplacement
+  primes        Float? // Primes
+  type          String   @default("normal") // normal, retard, absence, heures_supplementaires
+  commentaire   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  salarie     Salarie      @relation(fields: [salarieId], references: [id], onDelete: Cascade)
+  perimetre   Perimetre?   @relation(fields: [perimetreId], references: [id], onDelete: SetNull)
+  codeAffaire CodeAffaire? @relation(fields: [codeAffaireId], references: [id], onDelete: SetNull)
+
+  @@map("pointages")
+}
+
+model SalariePerimetre {
+  id          String    @id @default(cuid())
+  salarieId   String
+  perimetreId String
+  dateDebut   DateTime  @default(now())
+  dateFin     DateTime?
+
+  salarie   Salarie   @relation(fields: [salarieId], references: [id], onDelete: Cascade)
+  perimetre Perimetre @relation(fields: [perimetreId], references: [id], onDelete: Cascade)
+
+  @@unique([salarieId, perimetreId])
+  @@map("salarie_perimetres")
+}
+
+model Metier {
+  id          String   @id @default(cuid())
+  nom         String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("metiers")
+}
+
+model Horaire {
+  id          String   @id @default(cuid())
+  salarieId   String
+  jourSemaine Int // 0 = Dimanche, 1 = Lundi, ..., 6 = Samedi
+  heureDebut  String // Format HH:mm
+  heureFin    String // Format HH:mm
+  pauseDebut  String? // Format HH:mm
+  pauseFin    String? // Format HH:mm
+  actif       Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  salarie Salarie @relation(fields: [salarieId], references: [id], onDelete: Cascade)
+
+  @@map("horaires")
+}
+
+model Usine {
+  id                     String   @id @default(cuid())
+  nom                    String
+  secteurActivite        String?
+  adresse                String
+  latitudePoste          Float? // Coordonnées GPS du poste de garde
+  longitudePoste         Float?
+  latitudeRassemblement  Float? // Coordonnées GPS du point de rassemblement
+  longitudeRassemblement Float?
+  numeroUrgence          String?
+  perimetreId            String
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  perimetre              Perimetre                    @relation(fields: [perimetreId], references: [id], onDelete: Cascade)
+  accueilsRequis         AccueilRequis[]
+  formationsRequis       FormationRequis[]
+  documentsAcces         DocumentAcces[]
+  equipementsSpecifiques EquipementSpecifique[]
+  structures             StructureOrganisationnelle[]
+
+  @@map("usines")
+}
+
+model AccueilRequis {
+  id            String   @id @default(cuid())
+  usineId       String
+  nom           String
+  dureeValidite Int? // Durée en jours
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  usine Usine @relation(fields: [usineId], references: [id], onDelete: Cascade)
+
+  @@map("accueils_requis")
+}
+
+model FormationRequis {
+  id        String   @id @default(cuid())
+  usineId   String
+  type      String // Type de formation
+  duree     Int? // Durée en heures
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  usine Usine @relation(fields: [usineId], references: [id], onDelete: Cascade)
+
+  @@map("formations_requis")
+}
+
+model DocumentAcces {
+  id          String   @id @default(cuid())
+  usineId     String
+  type        String // carte_identite, photo, carte_btp, carte_anfas_n1
+  obligatoire Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  usine Usine @relation(fields: [usineId], references: [id], onDelete: Cascade)
+
+  @@map("documents_acces")
+}
+
+model EquipementSpecifique {
+  id          String   @id @default(cuid())
+  usineId     String
+  nom         String // detecteur_4_gaz, chaussures_securite_rangeruse, autre
+  description String?
+  obligatoire Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  usine Usine @relation(fields: [usineId], references: [id], onDelete: Cascade)
+
+  @@map("equipements_specifiques")
+}
+
+model StructureOrganisationnelle {
+  id          String   @id @default(cuid())
+  type        String // site, unite, secteur, batiment, etage
+  nom         String
+  code        String?
+  description String?
+  numeroPDP   String? // Numéro de PDP (Plan de Prévention)
+  parentId    String? // ID du parent dans la hiérarchie
+  perimetreId String
+  usineId     String? // ID du site qui a créé cette structure
+  ordre       Int? // Ordre d'affichage
+  actif       Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  perimetre             Perimetre                    @relation(fields: [perimetreId], references: [id], onDelete: Cascade)
+  usine                 Usine?                       @relation(fields: [usineId], references: [id], onDelete: SetNull)
+  parent                StructureOrganisationnelle?  @relation("StructureHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  enfants               StructureOrganisationnelle[] @relation("StructureHierarchy")
+  affectationsPersonnel AffectationPersonnel[]
+
+  @@map("structures_organisationnelles")
+}
+
+model AffectationPersonnel {
+  id          String    @id @default(cuid())
+  salarieId   String
+  structureId String
+  role        String // Salarie, PREPA, CE, RDC, CAFF, AUTRE
+  dateDebut   DateTime  @default(now())
+  dateFin     DateTime?
+  actif       Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  salarie   Salarie                    @relation(fields: [salarieId], references: [id], onDelete: Cascade)
+  structure StructureOrganisationnelle @relation(fields: [structureId], references: [id], onDelete: Cascade)
+
+  @@map("affectations_personnel")
+}
+
+model Evaluation {
+  id                 String   @id @default(cuid())
+  salarieId          String
+  evaluateurId       String // ID du RDC ou autre évaluateur
+  date               DateTime @default(now())
+  type               String // annuelle, semestrielle, trimestrielle, ponctuelle
+  note               Float? // Note sur 20 ou autre échelle
+  commentaire        String?
+  pointsPositifs     String? // Points positifs
+  pointsAmelioration String? // Points à améliorer
+  objectifs          String? // Objectifs fixés
+  fichierUrl         String? // Document d'évaluation
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  salarie Salarie @relation(fields: [salarieId], references: [id], onDelete: Cascade)
+
+  @@map("evaluations")
+}
+
+model EvenementRH {
+  id          String   @id @default(cuid())
+  salarieId   String
+  type        String // embauche, promotion, sanction, changement_poste, formation, autre
+  titre       String
+  description String?
+  date        DateTime @default(now())
+  auteurId    String? // ID de la personne qui a créé l'événement
+  documentUrl String? // Document lié à l'événement
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  salarie Salarie @relation(fields: [salarieId], references: [id], onDelete: Cascade)
+
+  @@map("evenements_rh")
+}
+
+model Vehicule {
+  id                            String    @id @default(cuid())
+  type                          String // Voiture, Camion, Engin
+  marque                        String?
+  modele                        String?
+  immatriculation               String    @unique
+  dateAchat                     DateTime?
+  kilometrage                   Float     @default(0)
+  statut                        String    @default("disponible") // disponible, en_utilisation, maintenance, hors_service
+  nombrePlaces                  Int?
+  motorisation                  String? // thermique, electrique
+  plateauOuTole                 String? // plateau, tole
+  proprietaire                  String?
+  rdcId                         String? // RDC responsable du véhicule
+  dureeLocation                 String? // Durée de la location (ex: "12 mois", "2 ans")
+  dateProchaineMaintenance      DateTime?
+  typeCarburant                 String? // essence, diesel, electrique, hybride, gpl
+  typeContratLocation           String? // location_longue_duree, location_courte_duree, propriete, leasing
+  description                   String?
+  categorie                     String?
+  dateProchainControleTechnique DateTime?
+  createdAt                     DateTime  @default(now())
+  updatedAt                     DateTime  @updatedAt
+
+  rdc          Salarie?              @relation("VehiculeRDC", fields: [rdcId], references: [id], onDelete: SetNull)
+  affectations AffectationVehicule[]
+  historiques  HistoriqueVehicule[]
+  documents    DocumentVehicule[]
+
+  @@map("vehicules")
+}
+
+model AffectationVehicule {
+  id                      String    @id @default(cuid())
+  vehiculeId              String
+  salarieId               String?
+  interventionId          String?
+  dateAttribution         DateTime  @default(now())
+  dateRestitution         DateTime?
+  photoAttribution        String? // URL photo lors de l'attribution
+  ficheConstatAttribution String? // URL fiche constat attribution
+  photoRestitution        String? // URL photo lors de la restitution
+  ficheConstatRestitution String? // URL fiche constat restitution
+  commentaire             String?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  vehicule     Vehicule      @relation(fields: [vehiculeId], references: [id], onDelete: Cascade)
+  salarie      Salarie?      @relation(fields: [salarieId], references: [id], onDelete: SetNull)
+  intervention Intervention? @relation(fields: [interventionId], references: [id], onDelete: SetNull)
+
+  @@map("affectations_vehicule")
+}
+
+model HistoriqueVehicule {
+  id          String   @id @default(cuid())
+  vehiculeId  String
+  type        String // revision, entretien, reparation, autre
+  date        DateTime
+  description String?
+  kilometrage Float?
+  cout        Float?
+  commentaire String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  vehicule Vehicule @relation(fields: [vehiculeId], references: [id], onDelete: Cascade)
+
+  @@map("historiques_vehicule")
+}
+
+model DocumentVehicule {
+  id             String    @id @default(cuid())
+  vehiculeId     String
+  type           String // carte_grise, assurance, controle_technique, autre
+  nom            String
+  fichierUrl     String?
+  dateExpiration DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  vehicule Vehicule @relation(fields: [vehiculeId], references: [id], onDelete: Cascade)
+
+  @@map("documents_vehicule")
+}
+
+model DemandeAchat {
+  id              String    @id @default(cuid())
+  type            String // achat, fourniture
+  materielNom     String
+  quantite        Int       @default(1)
+  description     String?
+  priorite        String    @default("normal") // basse, normal, haute, urgente
+  statut          String    @default("en_attente") // en_attente, approuve, refuse, commande, livre
+  demandePar      String // ID du salarié qui a fait la demande
+  approuvePar     String? // ID du salarié qui a approuvé
+  dateDemande     DateTime  @default(now())
+  dateApprobation DateTime?
+  dateLivraison   DateTime?
+  commentaire     String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("demandes_achat")
+}
+
+model CodeAffaire {
+  id          String    @id @default(cuid())
+  code        String    @unique
+  libelle     String
+  description String?
+  client      String?
+  activite    String? // Échafaudage, Calorifuge, Désamiantage, Travaux sur corde, Peinture, Métallerie, Naval
+  chantierId  String? // Lien optionnel avec un chantier
+  rdcId       String? // RDC responsable du code affaire
+  budget      Float?
+  dateDebut   DateTime?
+  dateFin     DateTime?
+  actif       Boolean   @default(true)
+  codeContrat Boolean   @default(false) // Indique si c'est un code contrat
+  creePar     String // ID du CAFF qui a créé le code
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  chantier          Chantier?      @relation("CodeAffaireChantier", fields: [chantierId], references: [id], onDelete: SetNull)
+  chantierPrincipal Chantier?      @relation("ChantierCodeAffaire")
+  rdc               Salarie?       @relation("CodeAffaireRDC", fields: [rdcId], references: [id], onDelete: SetNull)
+  pointages         Pointage[]
+  interventions     Intervention[] @relation("InterventionCodeAffaire")
+  Client            Client?        @relation(fields: [clientId], references: [id])
+  clientId          String?
+
+  @@map("codes_affaire")
+}
+
+model Client {
+  id               String   @id @default(cuid())
+  nom              String
+  adresse          String?
+  telephone        String?
+  email            String?
+  siret            String? // Numéro SIRET
+  siren            String? // Numéro SIREN
+  tva              String? // Numéro TVA intracommunautaire
+  contactPrincipal String? // Nom du contact principal
+  fonction         String? // Fonction du client
+  entreprise       String? // Entreprise du client
+  photoUrl         String? // URL de la photo du client
+  commentaire      String?
+  actif            Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  chantiers     Chantier[]
+  codesAffaire  CodeAffaire[]
+  donneursOrdre DonneurOrdre[] @relation("ClientDonneursOrdre")
+
+  @@map("clients")
+}
+
+model DonneurOrdre {
+  id          String   @id @default(cuid())
+  nom         String
+  prenom      String?
+  telephone   String?
+  email       String?
+  fonction    String? // Fonction du donneur d'ordre
+  entreprise  String? // Entreprise du donneur d'ordre
+  clientId    String? // Lien optionnel avec un client
+  commentaire String?
+  actif       Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  client        Client?        @relation("ClientDonneursOrdre", fields: [clientId], references: [id], onDelete: SetNull)
+  chantiers     Chantier[]     @relation("ChantierDonneurOrdre")
+  interventions Intervention[] @relation("InterventionDonneurOrdre")
+
+  @@map("donneurs_ordre")
+}
