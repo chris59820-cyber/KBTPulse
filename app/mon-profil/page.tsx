@@ -6,9 +6,8 @@ import MonProfilContent from '@/components/mon-profil/MonProfilContent'
 
 export default async function MonProfilPage() {
   const user = await requireAuth()
-  
   // Récupérer les informations complètes du salarié
-  const salarie = user.salarieId ? await prisma.salarie.findUnique({
+  const salarie = user?.salarieId ? await prisma.salarie.findUnique({
     where: { id: user.salarieId },
     include: {
       user: true,
@@ -108,7 +107,7 @@ export default async function MonProfilPage() {
         <main className="flex-1 overflow-y-auto p-6">
           <div className="max-w-7xl mx-auto">
             {salarie ? (
-              <MonProfilContent salarie={salarie} user={user} deplacementKM={deplacementKM} />
+              <MonProfilContent salarie={salarie} user={user!} deplacementKM={deplacementKM} />
             ) : (
               <div className="card text-center py-12">
                 <p className="text-gray-500 mb-4">Aucune information de salarié associée à votre compte</p>

@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import SidebarWrapper from '@/components/SidebarWrapper'
 import Header from '@/components/Header'
 import MetricCard from '@/components/MetricCard'

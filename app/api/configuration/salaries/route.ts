@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Créer le salarié et le compte utilisateur dans une transaction
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: any) => {
       // Créer le salarié
       const salarie = await tx.salarie.create({
         data: {

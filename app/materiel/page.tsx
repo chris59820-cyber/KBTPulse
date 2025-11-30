@@ -55,7 +55,7 @@ export default async function MaterielPage() {
     enginsConfies: any[]
   } | null = null
 
-  if (user.role === 'OUVRIER' && user.salarieId) {
+  if (user && user.role === 'OUVRIER' && user.salarieId) {
     // Récupérer le matériel du salarié ouvrier
     const salarie = await prisma.salarie.findUnique({
       where: { id: user.salarieId },
@@ -105,7 +105,7 @@ export default async function MaterielPage() {
         <main className="flex-1 overflow-y-auto p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-gray-900">
-              {user.role === 'OUVRIER' ? 'Mon matériel' : 'Inventaire du matériel'}
+              {user?.role === 'OUVRIER' ? 'Mon matériel' : 'Inventaire du matériel'}
             </h2>
             {user && user.role !== 'OUVRIER' && (
               <Link href="/materiel/nouveau" className="btn btn-primary flex items-center gap-2">
@@ -115,7 +115,7 @@ export default async function MaterielPage() {
             )}
           </div>
 
-          {user.role === 'OUVRIER' && materielOuvrier ? (
+          {user?.role === 'OUVRIER' && materielOuvrier ? (
             <div className="space-y-6">
               {/* Matériel fourni */}
               {materielOuvrier.materielFourni.length > 0 && (
@@ -307,13 +307,13 @@ export default async function MaterielPage() {
             </div>
           )}
 
-          {user.role !== 'OUVRIER' && materiel.length === 0 && (
+          {user?.role !== 'OUVRIER' && materiel.length === 0 && (
             <div className="card text-center py-12">
               <Package className="mx-auto text-gray-400 mb-4" size={48} />
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
                 Aucun matériel
               </h3>
-              {user && user.role !== 'OUVRIER' ? (
+              {(user?.role && ['ADMIN', 'CAFF', 'RH'].includes(user.role as string)) ? (
                 <>
                   <p className="text-gray-500 mb-6">
                     Commencez par ajouter votre premier matériel

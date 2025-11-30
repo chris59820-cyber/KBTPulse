@@ -62,8 +62,6 @@ export async function PUT(
       adresse, 
       telephone, 
       email, 
-      siret, 
-      siren, 
       photoUrl,
       commentaire,
       actif
@@ -96,8 +94,6 @@ export async function PUT(
         adresse: adresse ? adresse.trim() : null,
         telephone: telephone ? telephone.trim() : null,
         email: email ? email.trim() : null,
-        siret: siret ? siret.trim() : null,
-        siren: siren ? siren.trim() : null,
         photoUrl: photoUrl ? photoUrl.trim() : null,
         commentaire: commentaire ? commentaire.trim() : null,
         actif: actif !== undefined ? actif : existingClient.actif

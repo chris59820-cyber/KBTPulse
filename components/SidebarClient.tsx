@@ -48,7 +48,7 @@ export default function SidebarClient({ user }: SidebarClientProps) {
       href: '/espace-staff', 
       label: 'Espace Staff', 
       icon: Briefcase,
-      roles: ['PREPA', 'CE', 'RDC', 'CAFF', 'RH', 'AUTRE', 'ADMIN']
+      roles: ['PREPA', 'CE', 'RDC', 'CAFF', 'RH', 'AUTRE', 'OUVRIER', 'ADMIN']
     },
     { 
       href: '/espace-rdc', 

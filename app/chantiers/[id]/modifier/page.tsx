@@ -81,7 +81,14 @@ export default async function ModifierChantierPage(props: PageProps) {
         <main className="flex-1 overflow-y-auto p-6">
           <div className="max-w-4xl mx-auto">
             <FormModifierChantier 
-              chantier={chantier} 
+              chantier={{
+                ...chantier,
+                client: chantier.client ? {
+                  id: chantier.client.id,
+                  nom: chantier.client.nom,
+                  actif: chantier.client.actif
+                } : null
+              } as any} 
               usines={usines}
             />
           </div>

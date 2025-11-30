@@ -38,7 +38,7 @@ export async function PUT(
     }
 
     // Mettre à jour le salarié et gérer le compte utilisateur dans une transaction
-    const salarie = await prisma.$transaction(async (tx) => {
+    const salarie = await prisma.$transaction(async (tx: any) => {
       // Mettre à jour le salarié
       const salarieUpdated = await tx.salarie.update({
         where: { id: params.id },
@@ -171,7 +171,7 @@ export async function DELETE(
     }
 
     // Supprimer le salarié et toutes ses données associées dans une transaction
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
       // Supprimer le compte utilisateur associé s'il existe
       if (salarie.user) {
         await tx.user.delete({

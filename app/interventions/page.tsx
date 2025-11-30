@@ -142,7 +142,7 @@ export default async function InterventionsPage(props: PageProps) {
   // Extraire les clients uniques
   const clients = Array.from(new Set(
     allChantiers
-      .map(c => c.client)
+      .map(c => c.client?.nom)
       .filter((c): c is string => !!c)
   )).sort()
   
@@ -167,7 +167,7 @@ export default async function InterventionsPage(props: PageProps) {
   let interventions: any[] = []
 
   try {
-    if (user.role === 'OUVRIER' && user.salarieId) {
+    if (user && user.role === 'OUVRIER' && user.salarieId) {
     // Récupérer uniquement les interventions où le salarié est affecté et actif
     const affectations = await prisma.affectationIntervention.findMany({
       where: {
@@ -279,7 +279,7 @@ export default async function InterventionsPage(props: PageProps) {
     if (searchParams.activite) {
       interventions = interventions.filter(intervention =>
         intervention.chantier?.codesAffaire?.some(
-          ca => ca.activite === searchParams.activite
+          (ca: any) => ca.activite === searchParams.activite
         )
       )
     }
@@ -303,29 +303,38 @@ export default async function InterventionsPage(props: PageProps) {
         />
         
         <main className="flex-1 overflow-y-auto p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">
-              {user.role === 'OUVRIER' ? 'Mes interventions' : 'Liste des interventions'}
-            </h2>
-            {user && user.role !== 'OUVRIER' && (
-              <Link href="/interventions/nouvelle" className="btn btn-primary flex items-center gap-2">
-                <Plus size={20} />
-                Nouvelle intervention
-              </Link>
-            )}
-          </div>
-          
-          {/* Composant de filtres */}
-          {user.role !== 'OUVRIER' && (
-            <FiltresInterventions
-              rdcs={rdcs}
-              usines={usines}
-              secteurs={secteurs}
-              clients={clients}
-              activites={activites}
-              codesAffaire={codesAffaire.map(ca => ({ id: ca.id, code: ca.code }))}
-            />
-          )}
+  <div className="flex items-center justify-between mb-6">
+    <h2 className="text-2xl font-bold text-gray-900">
+      {user?.role === 'OUVRIER'
+        ? 'Mes interventions'
+        : 'Liste des interventions'}
+    </h2>
+
+    {user?.role !== 'OUVRIER' && (
+      <Link
+        href="/interventions/nouvelle"
+        className="btn btn-primary flex items-center gap-2"
+      >
+        <Plus size={20} />
+        Nouvelle intervention
+      </Link>
+    )}
+  </div>
+
+  {/* Composant de filtres */}
+  {user?.role !== 'OUVRIER' && (
+    <FiltresInterventions
+      rdcs={rdcs}
+      usines={usines}
+      secteurs={secteurs}
+      clients={clients}
+      activites={activites}
+      codesAffaire={codesAffaire.map(ca => ({
+        id: ca.id,
+        code: ca.code,
+      }))}
+    />
+  )}
 
           <div className="space-y-4">
             {interventions.map((intervention) => (

@@ -102,13 +102,14 @@ export default async function InterventionDetailPage({ params }: PageProps) {
 
   // Vérifier les droits d'accès
   // Accès : PREPA, CE, RDC, CAFF, Ouvriers affectés à cette intervention
-  const hasAccess = 
+  const hasAccess = user && (
     ['PREPA', 'CE', 'RDC', 'CAFF', 'ADMIN'].includes(user.role) ||
     intervention.affectationsIntervention.some(aff => {
       return user.salarieId === aff.salarieId && aff.actif
     }) ||
     user.salarieId === intervention.responsableId ||
     user.salarieId === intervention.salarieId
+  )
 
   if (!hasAccess) {
     return (
@@ -156,7 +157,7 @@ export default async function InterventionDetailPage({ params }: PageProps) {
         <main className="flex-1 overflow-y-auto p-6">
           <div className="max-w-7xl mx-auto">
             <DetailIntervention 
-              intervention={interventionWithRdc} 
+              intervention={interventionWithRdc as any} 
               user={user} 
               canViewFinancial={canViewFinancial}
             />

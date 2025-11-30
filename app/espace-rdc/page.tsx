@@ -8,14 +8,14 @@ export default async function EspaceRDCPage() {
   const user = await requireSpace('RDC')
 
   // Récupérer le salarié RDC pour obtenir son ID
-  const salarieRDC = user.salarieId ? await prisma.salarie.findUnique({
-    where: { id: user.salarieId }
+  const salarieRDC = user?.salarieId ? await prisma.salarie.findUnique({
+    where: { id: user?.salarieId || '' }
   }) : null
 
   // Récupérer les salariés affectés à ce RDC
   const personnelAffecte = await prisma.salarie.findMany({
     where: {
-      rdcId: salarieRDC?.id || user.id,
+      rdcId: salarieRDC?.id || user?.id || '',
       statut: 'actif'
     },
     include: {
@@ -56,7 +56,7 @@ export default async function EspaceRDCPage() {
   const [interventionsEnCours, affectationsAujourdhui, congesRTTEnAttente] = await Promise.all([
     prisma.intervention.count({
       where: {
-        rdcId: salarieRDC?.id || user.id,
+        rdcId: salarieRDC?.id || user?.id || '',
         statut: 'en_cours'
       }
     }),
@@ -67,7 +67,7 @@ export default async function EspaceRDCPage() {
           lt: new Date(new Date().setHours(23, 59, 59, 999))
         },
         salarie: {
-          rdcId: salarieRDC?.id || user.id
+          rdcId: salarieRDC?.id || user?.id || ''
         }
       }
     }),
@@ -76,7 +76,7 @@ export default async function EspaceRDCPage() {
         type: 'RTT',
         statut: 'en_attente',
         salarie: {
-          rdcId: salarieRDC?.id || user.id
+          rdcId: salarieRDC?.id || user?.id || ''
         }
       }
     })

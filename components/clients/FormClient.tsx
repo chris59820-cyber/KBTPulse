@@ -8,11 +8,11 @@ import Link from 'next/link'
 interface Client {
   id?: string
   nom: string
-  adresse?: string
-  telephone?: string
-  email?: string
-  photoUrl?: string
-  commentaire?: string
+  adresse?: string | null
+  telephone?: string | null
+  email?: string | null
+  photoUrl?: string | null
+  commentaire?: string | null
   actif?: boolean
 }
 
@@ -171,7 +171,7 @@ export default function FormClient({ client }: FormClientProps) {
             </label>
             <input
               type="text"
-              value={formData.adresse}
+              value={formData.adresse || ''}
               onChange={(e) => setFormData({ ...formData, adresse: e.target.value })}
               className="input"
             />
@@ -185,7 +185,7 @@ export default function FormClient({ client }: FormClientProps) {
             </label>
             <input
               type="tel"
-              value={formData.telephone}
+              value={formData.telephone || ''}
               onChange={(e) => setFormData({ ...formData, telephone: e.target.value })}
               className="input"
             />
@@ -199,7 +199,7 @@ export default function FormClient({ client }: FormClientProps) {
             </label>
             <input
               type="email"
-              value={formData.email}
+              value={formData.email || ''}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               className="input"
             />
@@ -258,7 +258,7 @@ export default function FormClient({ client }: FormClientProps) {
               Commentaire
             </label>
             <textarea
-              value={formData.commentaire}
+              value={formData.commentaire || ''}
               onChange={(e) => setFormData({ ...formData, commentaire: e.target.value })}
               className="input"
               rows={4}

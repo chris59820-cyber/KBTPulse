@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import SidebarWrapper from '@/components/SidebarWrapper'
 import Header from '@/components/Header'
 import { requireAuth } from '@/lib/middleware'
@@ -25,6 +27,7 @@ export default async function ChantiersPage() {
     orderBy: { createdAt: 'desc' },
     take: 50,
     include: {
+      client: true,
       _count: {
         select: {
           interventions: true
@@ -75,7 +78,7 @@ export default async function ChantiersPage() {
                     <div>
                       <h3 className="card-title">{chantier.nom}</h3>
                       {chantier.client && (
-                        <p className="text-sm text-gray-500 mt-1">{chantier.client}</p>
+                        <p className="text-sm text-gray-500 mt-1">{chantier.client.nom}</p>
                       )}
                     </div>
                   </div>

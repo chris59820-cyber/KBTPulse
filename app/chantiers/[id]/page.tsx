@@ -34,6 +34,7 @@ export default async function ChantierDetailPage(props: PageProps) {
   const chantier = await prisma.chantier.findUnique({
     where: { id: params.id },
     include: {
+      client: true,
       interventions: {
         include: {
           responsable: {
@@ -90,7 +91,7 @@ export default async function ChantierDetailPage(props: PageProps) {
   const canEditChantier = user && user.role !== 'OUVRIER'
   
   // Masquer le bouton "Supprimer" pour les ouvriers et les RDC
-  const canDeleteChantier = ['PREPA', 'CE', 'CAFF', 'ADMIN'].includes(user.role)
+  const canDeleteChantier = !!(user && ['PREPA', 'CE', 'CAFF', 'ADMIN'].includes(user.role))
 
   // Statistiques des interventions
   const statsInterventions = {
@@ -148,7 +149,7 @@ export default async function ChantierDetailPage(props: PageProps) {
                   <div>
                     <h1 className="text-2xl font-bold text-gray-900">{chantier.nom}</h1>
                     {chantier.client && (
-                      <p className="text-gray-600 mt-1">Client: {chantier.client}</p>
+                      <p className="text-gray-600 mt-1">Client: {chantier.client.nom}</p>
                     )}
                   </div>
                 </div>

@@ -37,7 +37,7 @@ export async function GET(
     // Vérifier l'accès
     const hasAccess = 
       ['PREPA', 'CE', 'RDC', 'CAFF', 'ADMIN'].includes(user.role) ||
-      intervention.affectationsIntervention.some(aff => user.salarieId === aff.salarieId) ||
+      intervention.affectationsIntervention.some((aff: any) => user.salarieId === aff.salarieId) ||
       user.salarieId === intervention.responsableId ||
       user.salarieId === intervention.salarieId
 
@@ -107,7 +107,7 @@ export async function POST(
 
     const hasAccess = 
       ['PREPA', 'CE', 'RDC', 'CAFF', 'ADMIN'].includes(user.role) ||
-      intervention.affectationsIntervention.some(aff => user.salarieId === aff.salarieId) ||
+      intervention.affectationsIntervention.some((aff: any) => user.salarieId === aff.salarieId) ||
       user.salarieId === intervention.responsableId ||
       user.salarieId === intervention.salarieId
 

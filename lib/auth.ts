@@ -29,9 +29,9 @@ export function hasAccess(userRole: UserRole, requiredRoles: UserRole[]): boolea
 // Rôles autorisés pour chaque espace
 export const ROLES = {
   ACCUEIL: ['PREPA', 'RDC', 'CAFF', 'AUTRE', 'OUVRIER', 'ADMIN'] as UserRole[],
-  MON_PROFIL: ['PREPA', 'CE', 'RDC', 'CAFF', 'RH', 'AUTRE', 'ADMIN'] as UserRole[],
-  INTERVENTIONS: ['PREPA', 'CE', 'RDC', 'CAFF', 'RH', 'AUTRE', 'ADMIN'] as UserRole[],
-  STAFF: ['PREPA', 'CE', 'RDC', 'CAFF', 'RH', 'AUTRE', 'ADMIN'] as UserRole[],
+  MON_PROFIL: ['PREPA', 'CE', 'RDC', 'CAFF', 'RH', 'AUTRE', 'OUVRIER', 'ADMIN'] as UserRole[],
+  INTERVENTIONS: ['PREPA', 'CE', 'RDC', 'CAFF', 'RH', 'AUTRE', 'OUVRIER', 'ADMIN'] as UserRole[],
+  STAFF: ['PREPA', 'CE', 'RDC', 'CAFF', 'RH', 'AUTRE', 'OUVRIER', 'ADMIN'] as UserRole[],
   OUVRIERS: ['PREPA', 'RDC', 'CAFF', 'AUTRE', 'ADMIN'] as UserRole[],
   RDC: ['RDC', 'CAFF', 'ADMIN'] as UserRole[],
   CAFF: ['CAFF', 'ADMIN'] as UserRole[],

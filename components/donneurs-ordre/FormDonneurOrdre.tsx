@@ -13,13 +13,13 @@ interface Client {
 interface DonneurOrdre {
   id?: string
   nom: string
-  prenom?: string
-  telephone?: string
-  email?: string
-  fonction?: string
-  entreprise?: string
-  clientId?: string
-  commentaire?: string
+  prenom?: string | null
+  telephone?: string | null
+  email?: string | null
+  fonction?: string | null
+  entreprise?: string | null
+  clientId?: string | null
+  commentaire?: string | null
   actif?: boolean
 }
 

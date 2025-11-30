@@ -7,14 +7,14 @@ import { useRouter } from 'next/navigation'
 interface Client {
   id: string
   nom: string
-  adresse?: string
-  telephone?: string
-  email?: string
-  photoUrl?: string
-  commentaire?: string
+  adresse?: string | null
+  telephone?: string | null
+  email?: string | null
+  photoUrl?: string | null
+  commentaire?: string | null
   actif: boolean
-  createdAt: string
-  updatedAt: string
+  createdAt: Date | string
+  updatedAt: Date | string
   _count?: {
     chantiers: number
     donneursOrdre: number
@@ -24,20 +24,20 @@ interface Client {
 interface DonneurOrdre {
   id: string
   nom: string
-  prenom?: string
-  telephone?: string
-  email?: string
-  fonction?: string
-  entreprise?: string
-  clientId?: string
-  commentaire?: string
+  prenom?: string | null
+  telephone?: string | null
+  email?: string | null
+  fonction?: string | null
+  entreprise?: string | null
+  clientId?: string | null
+  commentaire?: string | null
   actif: boolean
-  createdAt: string
-  updatedAt: string
+  createdAt: Date | string
+  updatedAt: Date | string
   client?: {
     id: string
     nom: string
-  }
+  } | null
   _count?: {
     chantiers: number
     interventions: number

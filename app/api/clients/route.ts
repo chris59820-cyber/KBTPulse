@@ -49,8 +49,6 @@ export async function POST(request: NextRequest) {
       adresse, 
       telephone, 
       email, 
-      siret, 
-      siren, 
       photoUrl,
       commentaire 
     } = body
@@ -69,8 +67,6 @@ export async function POST(request: NextRequest) {
         adresse: adresse ? adresse.trim() : null,
         telephone: telephone ? telephone.trim() : null,
         email: email ? email.trim() : null,
-        siret: siret ? siret.trim() : null,
-        siren: siren ? siren.trim() : null,
         photoUrl: photoUrl ? photoUrl.trim() : null,
         commentaire: commentaire ? commentaire.trim() : null,
         actif: true

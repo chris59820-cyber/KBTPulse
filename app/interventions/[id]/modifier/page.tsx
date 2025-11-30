@@ -64,8 +64,8 @@ export default async function ModifierInterventionPage({ params }: PageProps) {
   }
 
   // Vérifier les permissions : PREPA, CE, RDC, CAFF peuvent modifier
-  const canEdit = ['PREPA', 'CE', 'RDC', 'CAFF', 'ADMIN'].includes(user.role) || 
-                  user.salarieId === intervention.responsableId
+  const canEdit = user && (['PREPA', 'CE', 'RDC', 'CAFF', 'ADMIN'].includes(user.role) || 
+                  user.salarieId === intervention.responsableId)
 
   if (!canEdit) {
     return (
@@ -152,7 +152,7 @@ export default async function ModifierInterventionPage({ params }: PageProps) {
         
         <main className="flex-1 overflow-y-auto p-6">
           <FormNouvelleIntervention 
-            intervention={intervention ? { ...intervention, rdc, codeAffaireId: intervention.codeAffaireId || undefined } : undefined}
+            intervention={intervention ? { ...intervention, rdc, codeAffaireId: intervention.codeAffaireId || undefined } as any : undefined}
             chantiers={chantiers}
             salaries={salaries}
             materiels={materiels}

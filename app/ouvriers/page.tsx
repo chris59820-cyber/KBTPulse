@@ -7,7 +7,7 @@ import ListeOuvriers from '@/components/ouvriers/ListeOuvriers'
 
 export default async function OuvriersPage() {
   const user = await requireSpace('OUVRIERS')
-  const canViewSensitive = user && (user.role === 'RDC' || user.role === 'CAFF' || user.role === 'ADMIN')
+  const canViewSensitive = !!(user && (user.role === 'RDC' || user.role === 'CAFF' || user.role === 'ADMIN'))
 
   const ouvriers = await prisma.salarie.findMany({
     where: {

@@ -1,5 +1,6 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// -------------------------------
+// Prisma Configuration
+// -------------------------------
 
 generator client {
   provider = "prisma-client-js"
@@ -10,15 +11,19 @@ datasource db {
   url      = "file:./dev.db"
 }
 
+// -------------------------------
+// MODELS
+// -------------------------------
+
 model User {
   id                String    @id @default(cuid())
   identifiant       String    @unique
-  motDePasse        String // hash du mot de passe
+  motDePasse        String
   email             String?   @unique
   nom               String?
   prenom            String?
-  role              String    @default("AUTRE") // PREPA, CE, RDC, CAFF, RH, AUTRE, ADMIN
-  salarieId         String?   @unique // Lien optionnel avec un salarié
+  role              String    @default("AUTRE")
+  salarieId         String?   @unique
   actif             Boolean   @default(true)
   derniereConnexion DateTime?
   createdAt         DateTime  @default(now())
@@ -37,20 +42,20 @@ model Salarie {
   email         String?   @unique
   telephone     String?
   adresse       String?
-  photoUrl      String? // URL de la photo
+  photoUrl      String?
   poste         String
-  fonction      String? // Fonction du salarié
-  metier        String? // Métier du salarié
+  fonction      String?
+  metier        String?
   coefficient   Float?
   matricule     String?   @unique
   dateEmbauche  DateTime  @default(now())
-  typeContrat   String? // CDI, CDD, ETT
+  typeContrat   String?
   tauxHoraire   Float?
-  deplacement   Float? // Calcul automatique des KM
-  niveauAcces   String? // PREPA, CE, RDC, CAFF, OUVRIER, AUTRE
-  statut        String    @default("actif") // actif, inactif, congé
-  perimetreId   String? // Périmètre d'affectation
-  rdcId         String? // RDC responsable
+  deplacement   Float?
+  niveauAcces   String?
+  statut        String    @default("actif")
+  perimetreId   String?
+  rdcId         String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -87,11 +92,15 @@ model Salarie {
   @@map("salaries")
 }
 
+// -------------------------------
+// Compétences & Habilitations
+// -------------------------------
+
 model Competence {
   id              String    @id @default(cuid())
   salarieId       String
   nom             String
-  niveau          String? // debutant, intermediaire, avance, expert
+  niveau          String?
   dateAcquisition DateTime?
   description     String?
   createdAt       DateTime  @default(now())
@@ -110,7 +119,7 @@ model Habilitation {
   dateObtention  DateTime
   dateExpiration DateTime?
   organisme      String?
-  fichierUrl     String? // URL du fichier/document
+  fichierUrl     String?
   actif          Boolean   @default(true)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
@@ -128,7 +137,7 @@ model Autorisation {
   dateObtention  DateTime
   dateExpiration DateTime?
   organisme      String?
-  fichierUrl     String? // URL du fichier/document
+  fichierUrl     String?
   actif          Boolean   @default(true)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
@@ -144,9 +153,9 @@ model VisiteMedicale {
   dateVisite    DateTime
   dateProchaine DateTime?
   medecin       String?
-  resultat      String? // apte, inapte, apte_avec_restriction
+  resultat      String?
   commentaire   String?
-  fichierUrl    String? // URL du certificat médical
+  fichierUrl    String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -158,7 +167,7 @@ model VisiteMedicale {
 model RestrictionMedicale {
   id          String    @id @default(cuid())
   salarieId   String
-  type        String // restriction_temporaire, restriction_permanente, contre_indication
+  type        String
   description String
   dateDebut   DateTime
   dateFin     DateTime?
@@ -172,14 +181,18 @@ model RestrictionMedicale {
   @@map("restrictions_medicales")
 }
 
+// -------------------------------
+// Publications & Congés
+// -------------------------------
+
 model Publication {
   id               String    @id @default(cuid())
   titre            String
   contenu          String
   imageUrl         String?
-  auteurId         String? // ID de l'utilisateur qui a créé la publication
-  profilsAutorises String? // Profils autorisés à voir: RDC,CAFF,AUTRE
-  publique         Boolean   @default(false) // Si true, visible par tous les ouvriers
+  auteurId         String?
+  profilsAutorises String?
+  publique         Boolean   @default(false)
   perimetreId      String?
   datePublication  DateTime  @default(now())
   dateExpiration   DateTime?
@@ -195,15 +208,15 @@ model Publication {
 model Conge {
   id                    String    @id @default(cuid())
   salarieId             String
-  type                  String // CP, RTT, Repos, RC, RL, EF
+  type                  String
   dateDebut             DateTime
   dateFin               DateTime
   dureeJours            Float?
   dureeHeures           Float?
   commentaire           String?
-  statut                String    @default("en_attente") // en_attente, valide, refuse, annule
+  statut                String    @default("en_attente")
   commentaireValidation String?
-  validePar             String? // ID de l'utilisateur qui a validé
+  validePar             String?
   dateValidation        DateTime?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
@@ -218,11 +231,11 @@ model ContactUrgence {
   salarieId           String
   nom                 String
   prenom              String
-  relation            String? // Conjoint, Parent, Ami, etc.
+  relation            String?
   telephone           String
   telephoneSecondaire String?
   email               String?
-  priorite            Int      @default(1) // 1 = principal, 2 = secondaire, etc.
+  priorite            Int      @default(1)
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
@@ -231,12 +244,16 @@ model ContactUrgence {
   @@map("contacts_urgence")
 }
 
+// -------------------------------
+// Matériel & Engins
+// -------------------------------
+
 model MaterielFourni {
   id          String   @id @default(cuid())
   salarieId   String
-  type        String // lampe_frontale, perceuse_batterie, masque_fuite, stop_chute, visseuse, masque_catec, gilet_sauvetage, telephone, talkie_walkie
+  type        String
   dateFourni  DateTime @default(now())
-  etat        String   @default("bon") // bon, usage, degrade, perdu
+  etat        String   @default("bon")
   commentaire String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -249,16 +266,16 @@ model MaterielFourni {
 model EnginConfie {
   id                      String    @id @default(cuid())
   salarieId               String
-  type                    String // Voiture, Camion, Engin
+  type                    String
   marque                  String?
   modele                  String?
   immatriculation         String
   dateAttribution         DateTime  @default(now())
   dateRestitution         DateTime?
-  photoAttribution        String? // URL photo lors de l'attribution
-  ficheConstatAttribution String? // URL fiche constat attribution
-  photoRestitution        String? // URL photo lors de la restitution
-  ficheConstatRestitution String? // URL fiche constat restitution
+  photoAttribution        String?
+  ficheConstatAttribution String?
+  photoRestitution        String?
+  ficheConstatRestitution String?
   commentaire             String?
   createdAt               DateTime  @default(now())
   updatedAt               DateTime  @updatedAt
@@ -271,12 +288,12 @@ model EnginConfie {
 model MaterielAttribue {
   id              String    @id @default(cuid())
   salarieId       String
-  type            String // cle_echafaudage, marteau, caisse_calorifuge, harnais, detecteur_4_gaz, ceinture_porte_outil, chaussures_securite, masque_gvs
-  reference       String? // Référence pour détecteur 4 gaz, etc.
-  pointure        String? // Pour chaussures de sécurité
+  type            String
+  reference       String?
+  pointure        String?
   dateAttribution DateTime  @default(now())
   dateRestitution DateTime?
-  etat            String    @default("bon") // bon, usage, degrade, perdu
+  etat            String    @default("bon")
   commentaire     String?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
@@ -289,11 +306,11 @@ model MaterielAttribue {
 model DocumentPersonnel {
   id             String    @id @default(cuid())
   salarieId      String
-  type           String // carte_identite, passeport, permis_conduire, carte_grise
+  type           String
   numero         String?
   dateEmission   DateTime?
   dateExpiration DateTime?
-  fichierUrl     String? // URL du document
+  fichierUrl     String?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
@@ -302,6 +319,10 @@ model DocumentPersonnel {
   @@map("documents_personnels")
 }
 
+// -------------------------------
+// Formations & accès site
+// -------------------------------
+
 model FormationSalarie {
   id             String    @id @default(cuid())
   salarieId      String
@@ -309,8 +330,8 @@ model FormationSalarie {
   organisme      String?
   dateFormation  DateTime
   dateExpiration DateTime?
-  duree          Float? // En heures
-  fichierUrl     String? // URL du certificat/attestation
+  duree          Float?
+  fichierUrl     String?
   commentaire    String?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
@@ -327,7 +348,7 @@ model AccesSiteClient {
   client         String?
   dateObtention  DateTime
   dateExpiration DateTime?
-  fichierUrl     String? // URL du document d'accès
+  fichierUrl     String?
   commentaire    String?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
@@ -337,40 +358,37 @@ model AccesSiteClient {
   @@map("acces_sites_clients")
 }
 
-model Chantier {
-  id                    String    @id @default(cuid())
-  nom                   String
-  adresse               String?
-  description           String?
-  clientId              String? // Client du chantier
-  dateDebut             DateTime?
-  dateFin               DateTime?
-  budget                Float?
-  statut                String    @default("planifie") // planifie, en_attente, en_cours, termine, annule
-  rdcId                 String? // RDC responsable du chantier
-  codeAffaireId         String?   @unique // Code affaire principal du chantier
-  site                  String? // Site du chantier
-  secteur               String? // Secteur du chantier
-  numeroCommande        String? // Numéro de commande
-  donneurOrdreId        String? // Donneur d'ordre du chantier
-  // Champs de compatibilité (à supprimer après migration)
-  clientOld             String?   @map("client_old")
-  donneurOrdreNom       String?   @map("donneur_ordre_nom_old")
-  donneurOrdreTelephone String?   @map("donneur_ordre_telephone_old")
-  donneurOrdreEmail     String?   @map("donneur_ordre_email_old")
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
+// -------------------------------
+// Client
+// -------------------------------
 
-  client        Client?               @relation(fields: [clientId], references: [id], onDelete: SetNull)
-  rdc           Salarie?              @relation("ChantierRDC", fields: [rdcId], references: [id], onDelete: SetNull)
-  codeAffaire   CodeAffaire?          @relation("ChantierCodeAffaire", fields: [codeAffaireId], references: [id], onDelete: SetNull)
-  donneurOrdre  DonneurOrdre?         @relation("ChantierDonneurOrdre", fields: [donneurOrdreId], references: [id], onDelete: SetNull)
-  interventions Intervention[]
-  affectations  AffectationPlanning[]
-  codesAffaire  CodeAffaire[]         @relation("CodeAffaireChantier")
+model Client {
+  id               String   @id @default(cuid())
+  nom              String
+  adresse          String?
+  telephone        String?
+  email            String?
+  siret            String?
+  siren            String?
+  contactPrincipal String?
+  fonction         String?
+  entreprise       String?
+  photoUrl         String?
+  commentaire      String?
+  actif            Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
-  @@map("chantiers")
+  chantiers     Chantier[]
+  codesAffaire  CodeAffaire[]
+  donneursOrdre DonneurOrdre[] @relation("ClientDonneursOrdre")
+
+  @@map("clients")
 }
+
+// -------------------------------
+// Intervention
+// -------------------------------
 
 model Intervention {
   id                    String    @id @default(cuid())
@@ -378,30 +396,29 @@ model Intervention {
   description           String?
   dateDebut             DateTime?
   dateFin               DateTime?
-  dateDebutReelle       DateTime? // Date et heure de début réelle
-  dateFinReelle         DateTime? // Date et heure de fin réelle
-  duree                 Float? // en heures (prévue)
-  dureeReelle           Float? // en heures (réellement passée)
-  tempsPrevu            Float? // Temps prévu pour réaliser l'intervention
-  avancement            Int       @default(0) // Pourcentage d'avancement (0-100)
-  statut                String    @default("planifiee") // planifiee, en_attente, en_cours, diagnostique, terminee, annulee
-  type                  String? // echafaudage, calorifuge, autre
-  nature                String? // pose, depose
-  secteur               String? // Secteur d'intervention
-  usine                 String? // Usine
-  latitude              Float? // Coordonnées GPS
+  dateDebutReelle       DateTime?
+  dateFinReelle         DateTime?
+  duree                 Float?
+  dureeReelle           Float?
+  tempsPrevu            Float?
+  avancement            Int       @default(0)
+  statut                String    @default("planifiee")
+  type                  String?
+  nature                String?
+  secteur               String?
+  usine                 String?
+  latitude              Float?
   longitude             Float?
-  montantTotal          Float? // Montant total de l'intervention
-  montantResteAFaire    Float? // Montant du reste à faire
-  retexPositifs         String? // Retour d'expérience - points positifs
-  retexNegatifs         String? // Retour d'expérience - points négatifs
-  metier                String? // Métier concerné
-  rdcId                 String? // RDC responsable
-  responsableId         String? // Responsable de l'intervention
-  codeAffaireId         String? // Code affaire lié à l'intervention
-  donneurOrdreId        String? // Donneur d'ordre de l'intervention
+  montantTotal          Float?
+  montantResteAFaire    Float?
+  retexPositifs         String?
+  retexNegatifs         String?
+  metier                String?
+  rdcId                 String?
+  responsableId         String?
+  codeAffaireId         String?
+  donneurOrdreId        String?
   chantierId            String
-  // Champs de compatibilité (à supprimer après migration)
   donneurOrdreNom       String?   @map("donneur_ordre_nom_old")
   donneurOrdreTelephone String?   @map("donneur_ordre_telephone_old")
   donneurOrdreEmail     String?   @map("donneur_ordre_email_old")
@@ -409,12 +426,13 @@ model Intervention {
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
-  chantier                 Chantier                  @relation(fields: [chantierId], references: [id], onDelete: Cascade)
-  salarie                  Salarie?                  @relation(fields: [salarieId], references: [id], onDelete: SetNull)
-  responsable              Salarie?                  @relation("InterventionResponsable", fields: [responsableId], references: [id], onDelete: SetNull)
-  rdc                      Salarie?                  @relation("InterventionRDC", fields: [rdcId], references: [id], onDelete: SetNull)
-  codeAffaire              CodeAffaire?              @relation("InterventionCodeAffaire", fields: [codeAffaireId], references: [id], onDelete: SetNull)
-  donneurOrdre             DonneurOrdre?             @relation("InterventionDonneurOrdre", fields: [donneurOrdreId], references: [id], onDelete: SetNull)
+  chantier     Chantier      @relation(fields: [chantierId], references: [id], onDelete: Cascade)
+  salarie      Salarie?      @relation(fields: [salarieId], references: [id], onDelete: SetNull)
+  responsable  Salarie?      @relation("InterventionResponsable", fields: [responsableId], references: [id], onDelete: SetNull)
+  rdc          Salarie?      @relation("InterventionRDC", fields: [rdcId], references: [id], onDelete: SetNull)
+  codeAffaire  CodeAffaire?  @relation("InterventionCodeAffaire", fields: [codeAffaireId], references: [id], onDelete: SetNull)
+  donneurOrdre DonneurOrdre? @relation("InterventionDonneurOrdre", fields: [donneurOrdreId], references: [id], onDelete: SetNull)
+
   materielUtilise          MaterielUtilise[]
   documentsIntervention    DocumentIntervention[]
   affectationsIntervention AffectationIntervention[]
@@ -428,20 +446,24 @@ model Intervention {
   @@map("interventions")
 }
 
+// -------------------------------
+// Materiel & Ressources
+// -------------------------------
+
 model Materiel {
   id           String   @id @default(cuid())
   nom          String
   description  String?
-  categorie    String // outillage, vehicule, machine, consommable
+  categorie    String
   quantite     Int      @default(1)
   unite        String   @default("unité")
   prixUnitaire Float?
-  statut       String   @default("disponible") // disponible, en_utilisation, maintenance, hors_service
+  statut       String   @default("disponible")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   utilisations MaterielUtilise[]
-  codeAffaire  String? // Code affaire pour le pointage
+  codeAffaire  String?
 
   @@map("materiels")
 }
@@ -469,15 +491,15 @@ model MaterielUtilise {
 model DocumentIntervention {
   id             String    @id @default(cuid())
   interventionId String
-  type           String // plan, photo, pdp, liste, mos, autre
+  type           String
   nom            String
   description    String?
-  fichierUrl     String? // URL du document
+  fichierUrl     String?
   signe          Boolean   @default(false)
-  signataire     String? // Nom du signataire
+  signataire     String?
   dateSignature  DateTime?
-  peutEcrire     Boolean   @default(false) // Possibilité d'écrire sur le document
-  contenu        String? // Contenu du document si éditable
+  peutEcrire     Boolean   @default(false)
+  contenu        String?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
@@ -490,7 +512,7 @@ model AffectationIntervention {
   id             String    @id @default(cuid())
   interventionId String
   salarieId      String
-  role           String    @default("ouvrier") // chef_equipe, ouvrier
+  role           String    @default("ouvrier")
   dateDebut      DateTime  @default(now())
   dateFin        DateTime?
   actif          Boolean   @default(true)
@@ -507,7 +529,7 @@ model AffectationIntervention {
 model RessourceIntervention {
   id              String    @id @default(cuid())
   interventionId  String
-  type            String // outillage, fourniture, epi, vehicule, engin
+  type            String
   nom             String
   description     String?
   quantite        Int       @default(1)
@@ -530,7 +552,7 @@ model PhotoIntervention {
   interventionId String
   url            String
   description    String?
-  auteurId       String? // ID du salarié qui a ajouté la photo
+  auteurId       String?
   createdAt      DateTime @default(now())
 
   intervention Intervention @relation(fields: [interventionId], references: [id], onDelete: Cascade)
@@ -541,10 +563,10 @@ model PhotoIntervention {
 model AutoControle {
   id               String    @id @default(cuid())
   interventionId   String
-  element          String // Élément à contrôler suivant la liste
+  element          String
   verifie          Boolean   @default(false)
   commentaire      String?
-  verifiePar       String? // ID du salarié qui a vérifié
+  verifiePar       String?
   dateVerification DateTime?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
@@ -557,7 +579,7 @@ model AutoControle {
 model MessageIntervention {
   id             String   @id @default(cuid())
   interventionId String
-  auteurId       String // ID du salarié auteur
+  auteurId       String
   contenu        String
   lu             Boolean  @default(false)
   createdAt      DateTime @default(now())
@@ -570,9 +592,9 @@ model MessageIntervention {
 model ChecklistSecurite {
   id             String    @id @default(cuid())
   interventionId String    @unique
-  elements       String // JSON ou texte avec les éléments de la checklist
+  elements       String
   completee      Boolean   @default(false)
-  completeePar   String? // ID du salarié qui a complété
+  completeePar   String?
   dateCompletion DateTime?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
@@ -582,11 +604,15 @@ model ChecklistSecurite {
   @@map("checklist_securite")
 }
 
+// -------------------------------
+// Planning
+// -------------------------------
+
 model AffectationPlanning {
   id          String   @id @default(cuid())
   date        DateTime
-  heureDebut  String? // Format HH:mm
-  heureFin    String? // Format HH:mm
+  heureDebut  String?
+  heureFin    String?
   salarieId   String
   chantierId  String
   description String?
@@ -599,119 +625,179 @@ model AffectationPlanning {
   @@map("affectations_planning")
 }
 
+// -------------------------------
+// PÉRIMÈTRE
+// -------------------------------
+
 model Perimetre {
   id          String   @id @default(cuid())
   nom         String
   adresse     String
   ville       String?
   codePostal  String?
-  latitude    Float? // Coordonnées GPS du site
+  latitude    Float?
   longitude   Float?
   description String?
   actif       Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  actualites        Actualite[]
-  messagesSecurite  MessageSecurite[]
+  // actualites        Actualite[]           // Commentez temporairement
+  // messagesSecurite  MessageSecurite[]     // Commentez temporairement
   pointages         Pointage[]
   salariePerimetres SalariePerimetre[]
-  usines            Usine[]
-  structures        StructureOrganisationnelle[]
+  // usines            Usine[]               // Commentez temporairement
   publications      Publication[]
 
   @@map("perimetres")
 }
 
-model Actualite {
-  id              String   @id @default(cuid())
-  titre           String
-  description     String?
-  contenu         String?
-  imageUrl        String? // URL de l'image/photo principale
-  images          String? // JSON array d'URLs d'images supplémentaires
-  perimetreId     String?
-  auteurId        String?
-  publie          Boolean  @default(true)
-  datePublication DateTime @default(now())
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+// -------------------------------
+// Salaire - Périmètre (pivot)
+// -------------------------------
 
-  perimetre Perimetre? @relation(fields: [perimetreId], references: [id], onDelete: SetNull)
+model SalariePerimetre {
+  id          String   @id @default(cuid())
+  salarieId   String
+  perimetreId String
+  createdAt   DateTime @default(now())
 
-  @@map("actualites")
+  salarie   Salarie   @relation(fields: [salarieId], references: [id], onDelete: Cascade)
+  perimetre Perimetre @relation(fields: [perimetreId], references: [id], onDelete: Cascade)
+
+  @@unique([salarieId, perimetreId])
+  @@map("salaries_perimetres")
 }
 
-model MessageSecurite {
-  id          String    @id @default(cuid())
-  titre       String
-  contenu     String
-  type        String    @default("info") // info, warning, danger, success
-  imageUrl    String? // URL de l'image/photo
-  perimetreId String?
-  actif       Boolean   @default(true)
-  dateDebut   DateTime  @default(now())
-  dateFin     DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+// -------------------------------
+// Chantier
+// -------------------------------
 
-  perimetre Perimetre? @relation(fields: [perimetreId], references: [id], onDelete: SetNull)
+model Chantier {
+  id         String   @id @default(cuid())
+  nom        String
+  adresse    String?
+  ville      String?
+  codePostal String?
+  latitude   Float?
+  longitude  Float?
+  clientId   String?
+  rdcId      String?
+  actif      Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
-  @@map("messages_securite")
+  client        Client?               @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  rdc           Salarie?              @relation("ChantierRDC", fields: [rdcId], references: [id], onDelete: SetNull)
+  interventions Intervention[]
+  affectations  AffectationPlanning[]
+
+  @@map("chantiers")
 }
 
-model Conversation {
+// -------------------------------
+// Donneur d’ordre
+// -------------------------------
+
+model DonneurOrdre {
   id        String   @id @default(cuid())
-  nom       String?
-  type      String   @default("prive") // prive, groupe, equipe
+  nom       String
+  telephone String?
+  email     String?
+  clientId  String?
+  actif     Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  participants ConversationParticipant[]
-  messages     Message[]
+  client        Client?        @relation("ClientDonneursOrdre", fields: [clientId], references: [id], onDelete: SetNull)
+  interventions Intervention[] @relation("InterventionDonneurOrdre")
 
-  @@map("conversations")
+  @@map("donneurs_ordre")
 }
 
-model ConversationParticipant {
-  id             String   @id @default(cuid())
-  conversationId String
-  userId         String
+// -------------------------------
+// Code Affaire
+// -------------------------------
+
+model CodeAffaire {
+  id          String   @id @default(cuid())
+  code        String
+  description String?
+  clientId    String?
+  rdcId       String?
+  actif       Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  client        Client?        @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  rdc           Salarie?       @relation("CodeAffaireRDC", fields: [rdcId], references: [id], onDelete: SetNull)
+  interventions Intervention[] @relation("InterventionCodeAffaire")
+
+  // ⚠️ Ajouter le champ inverse pour Pointage
+  pointages Pointage[]
+
+  @@map("codes_affaire")
+}
+
+// -------------------------------
+// Véhicules
+// -------------------------------
+
+model Vehicule {
+  id              String   @id @default(cuid())
+  type            String
+  marque          String?
+  modele          String?
+  immatriculation String
+  rdcId           String?
+  actif           Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  rdc                  Salarie?              @relation("VehiculeRDC", fields: [rdcId], references: [id], onDelete: SetNull)
+  affectationsVehicule AffectationVehicule[]
+
+  @@map("vehicules")
+}
+
+// -------------------------------
+// Affectation Véhicule
+// -------------------------------
+
+model AffectationVehicule {
+  id             String    @id @default(cuid())
+  vehiculeId     String
   salarieId      String?
-  joinedAt       DateTime @default(now())
+  interventionId String?
+  dateDebut      DateTime  @default(now())
+  dateFin        DateTime?
+  commentaire    String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
-  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  vehicule     Vehicule      @relation(fields: [vehiculeId], references: [id], onDelete: Cascade)
+  salarie      Salarie?      @relation(fields: [salarieId], references: [id], onDelete: SetNull)
+  intervention Intervention? @relation(fields: [interventionId], references: [id], onDelete: SetNull)
 
-  @@unique([conversationId, userId])
-  @@map("conversation_participants")
+  @@map("affectations_vehicule")
 }
 
-model Message {
-  id             String   @id @default(cuid())
-  conversationId String
-  userId         String?
-  salarieId      String?
-  contenu        String
-  lu             Boolean  @default(false)
-  createdAt      DateTime @default(now())
-
-  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-
-  @@map("messages")
-}
+// -------------------------------
+// Pointage
+// -------------------------------
 
 model Pointage {
   id            String   @id @default(cuid())
   salarieId     String
   perimetreId   String?
-  codeAffaireId String? // Code affaire pour le pointage
+  codeAffaireId String?
   date          DateTime
   heureArrivee  String?
   heureDepart   String?
-  nombreHeures  Float? // Nombre d'heures travaillées
-  deplacement   Float? // KM de déplacement
-  primes        Float? // Primes
-  type          String   @default("normal") // normal, retard, absence, heures_supplementaires
+  nombreHeures  Float?
+  deplacement   Float?
+  primes        Float?
+  type          String   @default("normal")
   commentaire   String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -723,194 +809,55 @@ model Pointage {
   @@map("pointages")
 }
 
-model SalariePerimetre {
-  id          String    @id @default(cuid())
-  salarieId   String
-  perimetreId String
-  dateDebut   DateTime  @default(now())
-  dateFin     DateTime?
-
-  salarie   Salarie   @relation(fields: [salarieId], references: [id], onDelete: Cascade)
-  perimetre Perimetre @relation(fields: [perimetreId], references: [id], onDelete: Cascade)
-
-  @@unique([salarieId, perimetreId])
-  @@map("salarie_perimetres")
-}
-
-model Metier {
-  id          String   @id @default(cuid())
-  nom         String   @unique
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@map("metiers")
-}
+// -------------------------------
+// Horaires
+// -------------------------------
 
 model Horaire {
-  id          String   @id @default(cuid())
-  salarieId   String
-  jourSemaine Int // 0 = Dimanche, 1 = Lundi, ..., 6 = Samedi
-  heureDebut  String // Format HH:mm
-  heureFin    String // Format HH:mm
-  pauseDebut  String? // Format HH:mm
-  pauseFin    String? // Format HH:mm
-  actif       Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(cuid())
+  salarieId  String
+  date       DateTime
+  heureDebut String?
+  heureFin   String?
+  pause      Float?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   salarie Salarie @relation(fields: [salarieId], references: [id], onDelete: Cascade)
 
   @@map("horaires")
 }
 
-model Usine {
-  id                     String   @id @default(cuid())
-  nom                    String
-  secteurActivite        String?
-  adresse                String
-  latitudePoste          Float? // Coordonnées GPS du poste de garde
-  longitudePoste         Float?
-  latitudeRassemblement  Float? // Coordonnées GPS du point de rassemblement
-  longitudeRassemblement Float?
-  numeroUrgence          String?
-  perimetreId            String
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
-
-  perimetre              Perimetre                    @relation(fields: [perimetreId], references: [id], onDelete: Cascade)
-  accueilsRequis         AccueilRequis[]
-  formationsRequis       FormationRequis[]
-  documentsAcces         DocumentAcces[]
-  equipementsSpecifiques EquipementSpecifique[]
-  structures             StructureOrganisationnelle[]
-
-  @@map("usines")
-}
-
-model AccueilRequis {
-  id            String   @id @default(cuid())
-  usineId       String
-  nom           String
-  dureeValidite Int? // Durée en jours
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  usine Usine @relation(fields: [usineId], references: [id], onDelete: Cascade)
-
-  @@map("accueils_requis")
-}
-
-model FormationRequis {
-  id        String   @id @default(cuid())
-  usineId   String
-  type      String // Type de formation
-  duree     Int? // Durée en heures
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  usine Usine @relation(fields: [usineId], references: [id], onDelete: Cascade)
-
-  @@map("formations_requis")
-}
-
-model DocumentAcces {
-  id          String   @id @default(cuid())
-  usineId     String
-  type        String // carte_identite, photo, carte_btp, carte_anfas_n1
-  obligatoire Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  usine Usine @relation(fields: [usineId], references: [id], onDelete: Cascade)
-
-  @@map("documents_acces")
-}
-
-model EquipementSpecifique {
-  id          String   @id @default(cuid())
-  usineId     String
-  nom         String // detecteur_4_gaz, chaussures_securite_rangeruse, autre
-  description String?
-  obligatoire Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  usine Usine @relation(fields: [usineId], references: [id], onDelete: Cascade)
-
-  @@map("equipements_specifiques")
-}
-
-model StructureOrganisationnelle {
-  id          String   @id @default(cuid())
-  type        String // site, unite, secteur, batiment, etage
-  nom         String
-  code        String?
-  description String?
-  numeroPDP   String? // Numéro de PDP (Plan de Prévention)
-  parentId    String? // ID du parent dans la hiérarchie
-  perimetreId String
-  usineId     String? // ID du site qui a créé cette structure
-  ordre       Int? // Ordre d'affichage
-  actif       Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  perimetre             Perimetre                    @relation(fields: [perimetreId], references: [id], onDelete: Cascade)
-  usine                 Usine?                       @relation(fields: [usineId], references: [id], onDelete: SetNull)
-  parent                StructureOrganisationnelle?  @relation("StructureHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
-  enfants               StructureOrganisationnelle[] @relation("StructureHierarchy")
-  affectationsPersonnel AffectationPersonnel[]
-
-  @@map("structures_organisationnelles")
-}
-
-model AffectationPersonnel {
-  id          String    @id @default(cuid())
-  salarieId   String
-  structureId String
-  role        String // Salarie, PREPA, CE, RDC, CAFF, AUTRE
-  dateDebut   DateTime  @default(now())
-  dateFin     DateTime?
-  actif       Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  salarie   Salarie                    @relation(fields: [salarieId], references: [id], onDelete: Cascade)
-  structure StructureOrganisationnelle @relation(fields: [structureId], references: [id], onDelete: Cascade)
-
-  @@map("affectations_personnel")
-}
+// -------------------------------
+// Évaluations
+// -------------------------------
 
 model Evaluation {
-  id                 String   @id @default(cuid())
-  salarieId          String
-  evaluateurId       String // ID du RDC ou autre évaluateur
-  date               DateTime @default(now())
-  type               String // annuelle, semestrielle, trimestrielle, ponctuelle
-  note               Float? // Note sur 20 ou autre échelle
-  commentaire        String?
-  pointsPositifs     String? // Points positifs
-  pointsAmelioration String? // Points à améliorer
-  objectifs          String? // Objectifs fixés
-  fichierUrl         String? // Document d'évaluation
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  id           String   @id @default(cuid())
+  salarieId    String
+  type         String
+  date         DateTime
+  note         Float?
+  commentaire  String?
+  evaluateurId String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   salarie Salarie @relation(fields: [salarieId], references: [id], onDelete: Cascade)
 
   @@map("evaluations")
 }
 
+// -------------------------------
+// Événements RH
+// -------------------------------
+
 model EvenementRH {
   id          String   @id @default(cuid())
   salarieId   String
-  type        String // embauche, promotion, sanction, changement_poste, formation, autre
-  titre       String
-  description String?
-  date        DateTime @default(now())
-  auteurId    String? // ID de la personne qui a créé l'événement
-  documentUrl String? // Document lié à l'événement
+  type        String
+  date        DateTime
+  commentaire String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -919,183 +866,23 @@ model EvenementRH {
   @@map("evenements_rh")
 }
 
-model Vehicule {
-  id                            String    @id @default(cuid())
-  type                          String // Voiture, Camion, Engin
-  marque                        String?
-  modele                        String?
-  immatriculation               String    @unique
-  dateAchat                     DateTime?
-  kilometrage                   Float     @default(0)
-  statut                        String    @default("disponible") // disponible, en_utilisation, maintenance, hors_service
-  nombrePlaces                  Int?
-  motorisation                  String? // thermique, electrique
-  plateauOuTole                 String? // plateau, tole
-  proprietaire                  String?
-  rdcId                         String? // RDC responsable du véhicule
-  dureeLocation                 String? // Durée de la location (ex: "12 mois", "2 ans")
-  dateProchaineMaintenance      DateTime?
-  typeCarburant                 String? // essence, diesel, electrique, hybride, gpl
-  typeContratLocation           String? // location_longue_duree, location_courte_duree, propriete, leasing
-  description                   String?
-  categorie                     String?
-  dateProchainControleTechnique DateTime?
-  createdAt                     DateTime  @default(now())
-  updatedAt                     DateTime  @updatedAt
+// -------------------------------
+// Affectation Personnel
+// -------------------------------
 
-  rdc          Salarie?              @relation("VehiculeRDC", fields: [rdcId], references: [id], onDelete: SetNull)
-  affectations AffectationVehicule[]
-  historiques  HistoriqueVehicule[]
-  documents    DocumentVehicule[]
-
-  @@map("vehicules")
-}
-
-model AffectationVehicule {
-  id                      String    @id @default(cuid())
-  vehiculeId              String
-  salarieId               String?
-  interventionId          String?
-  dateAttribution         DateTime  @default(now())
-  dateRestitution         DateTime?
-  photoAttribution        String? // URL photo lors de l'attribution
-  ficheConstatAttribution String? // URL fiche constat attribution
-  photoRestitution        String? // URL photo lors de la restitution
-  ficheConstatRestitution String? // URL fiche constat restitution
-  commentaire             String?
-  createdAt               DateTime  @default(now())
-  updatedAt               DateTime  @updatedAt
-
-  vehicule     Vehicule      @relation(fields: [vehiculeId], references: [id], onDelete: Cascade)
-  salarie      Salarie?      @relation(fields: [salarieId], references: [id], onDelete: SetNull)
-  intervention Intervention? @relation(fields: [interventionId], references: [id], onDelete: SetNull)
-
-  @@map("affectations_vehicule")
-}
-
-model HistoriqueVehicule {
-  id          String   @id @default(cuid())
-  vehiculeId  String
-  type        String // revision, entretien, reparation, autre
-  date        DateTime
-  description String?
-  kilometrage Float?
-  cout        Float?
-  commentaire String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  vehicule Vehicule @relation(fields: [vehiculeId], references: [id], onDelete: Cascade)
-
-  @@map("historiques_vehicule")
-}
-
-model DocumentVehicule {
-  id             String    @id @default(cuid())
-  vehiculeId     String
-  type           String // carte_grise, assurance, controle_technique, autre
-  nom            String
-  fichierUrl     String?
-  dateExpiration DateTime?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-
-  vehicule Vehicule @relation(fields: [vehiculeId], references: [id], onDelete: Cascade)
-
-  @@map("documents_vehicule")
-}
-
-model DemandeAchat {
-  id              String    @id @default(cuid())
-  type            String // achat, fourniture
-  materielNom     String
-  quantite        Int       @default(1)
-  description     String?
-  priorite        String    @default("normal") // basse, normal, haute, urgente
-  statut          String    @default("en_attente") // en_attente, approuve, refuse, commande, livre
-  demandePar      String // ID du salarié qui a fait la demande
-  approuvePar     String? // ID du salarié qui a approuvé
-  dateDemande     DateTime  @default(now())
-  dateApprobation DateTime?
-  dateLivraison   DateTime?
-  commentaire     String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-
-  @@map("demandes_achat")
-}
-
-model CodeAffaire {
+model AffectationPersonnel {
   id          String    @id @default(cuid())
-  code        String    @unique
-  libelle     String
-  description String?
-  client      String?
-  activite    String? // Échafaudage, Calorifuge, Désamiantage, Travaux sur corde, Peinture, Métallerie, Naval
-  chantierId  String? // Lien optionnel avec un chantier
-  rdcId       String? // RDC responsable du code affaire
-  budget      Float?
-  dateDebut   DateTime?
+  salarieId   String
+  structureId String
+  role        String
+  dateDebut   DateTime  @default(now())
   dateFin     DateTime?
   actif       Boolean   @default(true)
-  codeContrat Boolean   @default(false) // Indique si c'est un code contrat
-  creePar     String // ID du CAFF qui a créé le code
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  chantier          Chantier?      @relation("CodeAffaireChantier", fields: [chantierId], references: [id], onDelete: SetNull)
-  chantierPrincipal Chantier?      @relation("ChantierCodeAffaire")
-  rdc               Salarie?       @relation("CodeAffaireRDC", fields: [rdcId], references: [id], onDelete: SetNull)
-  pointages         Pointage[]
-  interventions     Intervention[] @relation("InterventionCodeAffaire")
-  Client            Client?        @relation(fields: [clientId], references: [id])
-  clientId          String?
+  salarie Salarie @relation(fields: [salarieId], references: [id], onDelete: Cascade)
+  // structure StructureOrganisationnelle @relation(fields: [structureId], references: [id], onDelete: Cascade)  // Commentez cette ligne
 
-  @@map("codes_affaire")
-}
-
-model Client {
-  id               String   @id @default(cuid())
-  nom              String
-  adresse          String?
-  telephone        String?
-  email            String?
-  siret            String? // Numéro SIRET
-  siren            String? // Numéro SIREN
-  tva              String? // Numéro TVA intracommunautaire
-  contactPrincipal String? // Nom du contact principal
-  fonction         String? // Fonction du client
-  entreprise       String? // Entreprise du client
-  photoUrl         String? // URL de la photo du client
-  commentaire      String?
-  actif            Boolean  @default(true)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-
-  chantiers     Chantier[]
-  codesAffaire  CodeAffaire[]
-  donneursOrdre DonneurOrdre[] @relation("ClientDonneursOrdre")
-
-  @@map("clients")
-}
-
-model DonneurOrdre {
-  id          String   @id @default(cuid())
-  nom         String
-  prenom      String?
-  telephone   String?
-  email       String?
-  fonction    String? // Fonction du donneur d'ordre
-  entreprise  String? // Entreprise du donneur d'ordre
-  clientId    String? // Lien optionnel avec un client
-  commentaire String?
-  actif       Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  client        Client?        @relation("ClientDonneursOrdre", fields: [clientId], references: [id], onDelete: SetNull)
-  chantiers     Chantier[]     @relation("ChantierDonneurOrdre")
-  interventions Intervention[] @relation("InterventionDonneurOrdre")
-
-  @@map("donneurs_ordre")
+  @@map("affectations_personnel")
 }
