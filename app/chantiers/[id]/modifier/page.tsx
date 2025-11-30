@@ -86,7 +86,10 @@ export default async function ModifierChantierPage(props: PageProps) {
                 client: chantier.client ? {
                   id: chantier.client.id,
                   nom: chantier.client.nom,
-                  actif: chantier.client.actif
+                  actif: chantier.client.actif,
+                  email: chantier.client.email,
+                  adresse: chantier.client.adresse,
+                  telephone: chantier.client.telephone
                 } : null
               } as any} 
               usines={usines}
