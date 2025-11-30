@@ -1,4 +1,4 @@
-import { Package, Calendar, Hash, Shoe } from 'lucide-react'
+import { Package, Calendar, Hash, Footprints } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 
 interface Salarie {
@@ -60,7 +60,7 @@ export default function TabMaterielAttribue({ salarie }: TabMaterielAttribueProp
                     )}
                     {materiel.type === 'chaussures_securite' && materiel.pointure && (
                       <div className="flex items-center gap-1 mt-1 text-sm text-gray-600">
-                        <Shoe size={14} />
+                        <Footprints size={14} />
                         <span>Pointure: {materiel.pointure}</span>
                       </div>
                     )}

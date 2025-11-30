@@ -3,11 +3,11 @@ import Header from '@/components/Header'
 import { requireAuth } from '@/lib/middleware'
 import { prisma } from '@/lib/prisma'
 import { formatCurrency, formatDate } from '@/lib/utils'
-import { Plus, Package, Tool, Truck, Wrench, Droplet } from 'lucide-react'
+import { Plus, Package, Truck, Wrench, Droplet } from 'lucide-react'
 import Link from 'next/link'
 
 const categorieIcons: Record<string, any> = {
-  outillage: Tool,
+  outillage: Wrench,
   vehicule: Truck,
   machine: Wrench,
   consommable: Droplet

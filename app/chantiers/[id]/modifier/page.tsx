@@ -17,7 +17,10 @@ export default async function ModifierChantierPage(props: PageProps) {
   
   // Récupérer le chantier à modifier
   const chantier = await prisma.chantier.findUnique({
-    where: { id: params.id }
+    where: { id: params.id },
+    include: {
+      client: true,
+    },
   })
 
   if (!chantier) {

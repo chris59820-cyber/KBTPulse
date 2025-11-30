@@ -14,6 +14,14 @@ interface Client {
   id: string
   nom: string
   actif?: boolean
+  email?: string | null
+  adresse?: string | null
+  telephone?: string | null
+  siret?: string | null
+  siren?: string | null
+  createdAt?: Date
+  updatedAt?: Date
+  [key: string]: any // Pour accepter d'autres propriétés de Prisma
 }
 
 interface DonneurOrdre {
@@ -30,7 +38,7 @@ interface Chantier {
   nom: string
   adresse: string | null
   description: string | null
-  client: string | null
+  client: Client | null
   clientId: string | null
   dateDebut: Date | null
   dateFin: Date | null
