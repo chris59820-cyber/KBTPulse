@@ -205,6 +205,94 @@ model Publication {
   @@map("publications")
 }
 
+// -------------------------------
+// Actualités
+// -------------------------------
+
+model Actualite {
+  id              String    @id @default(cuid())
+  titre           String
+  description     String?
+  contenu         String?
+  imageUrl        String?
+  images          String?   // JSON array of image URLs
+  perimetreId     String?
+  auteurId        String?
+  publie          Boolean   @default(true)
+  datePublication DateTime  @default(now())
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  perimetre Perimetre? @relation(fields: [perimetreId], references: [id], onDelete: SetNull)
+
+  @@map("actualites")
+}
+
+// -------------------------------
+// Messages de sécurité
+// -------------------------------
+
+model MessageSecurite {
+  id          String    @id @default(cuid())
+  titre       String
+  contenu     String
+  type        String    @default("info")
+  imageUrl    String?
+  perimetreId String?
+  actif       Boolean   @default(true)
+  dateDebut   DateTime  @default(now())
+  dateFin     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  perimetre Perimetre? @relation(fields: [perimetreId], references: [id], onDelete: SetNull)
+
+  @@map("messages_securite")
+}
+
+// -------------------------------
+// Chat - Conversations
+// -------------------------------
+
+model Conversation {
+  id        String    @id @default(cuid())
+  nom       String?
+  type      String    @default("prive")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  participants ParticipantConversation[]
+  messages     Message[]
+
+  @@map("conversations")
+}
+
+model ParticipantConversation {
+  id             String   @id @default(cuid())
+  conversationId String
+  userId         String
+  createdAt      DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+  @@map("participants_conversation")
+}
+
+model Message {
+  id             String   @id @default(cuid())
+  conversationId String
+  userId         String?
+  salarieId      String?
+  contenu        String
+  lu             Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@map("messages")
+}
+
 model Conge {
   id                    String    @id @default(cuid())
   salarieId             String
@@ -642,8 +730,8 @@ model Perimetre {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  // actualites        Actualite[]           // Commentez temporairement
-  // messagesSecurite  MessageSecurite[]     // Commentez temporairement
+  actualites        Actualite[]
+  messagesSecurite  MessageSecurite[]
   pointages         Pointage[]
   salariePerimetres SalariePerimetre[]
   usines            Usine[]
