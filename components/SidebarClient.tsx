@@ -110,7 +110,7 @@ export default function SidebarClient({ user }: SidebarClientProps) {
         )}
       >
         <div className="p-3 border-b border-gray-700">
-          <Logo size="sm" showText={true} variant="dark" />
+          <Logo size="md" showText={true} variant="dark" />
           {user && (
             <div className="mt-2 pt-2 border-t border-gray-700">
               <p className="text-xs font-medium text-white truncate">
