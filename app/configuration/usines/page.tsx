@@ -10,51 +10,17 @@ export default async function ConfigurationUsinesPage() {
 
   const usines = await prisma.usine.findMany({
     include: {
-      perimetre: true,
-      accueilsRequis: true,
-      formationsRequis: true,
-      documentsAcces: true,
-      equipementsSpecifiques: true
+      perimetre: true
     },
     orderBy: { nom: 'asc' }
   })
 
-  // Récupérer les structures organisationnelles pour chaque usine
-  // Les structures sont maintenant liées directement à l'usine via usineId
-  const usinesAvecStructures = await Promise.all(
-    usines.map(async (usine) => {
-      // Récupérer les structures liées à cette usine (au niveau racine)
-      const structures = await prisma.structureOrganisationnelle.findMany({
-        where: {
-          usineId: usine.id,
-          parentId: null,
-          actif: true
-        },
-        include: {
-          enfants: {
-            where: { 
-              actif: true,
-              usineId: usine.id // Filtrer les enfants pour le même site
-            },
-            include: {
-              enfants: {
-                where: { 
-                  actif: true,
-                  usineId: usine.id // Filtrer les petits-enfants pour le même site
-                }
-              }
-            }
-          }
-        },
-        orderBy: { ordre: 'asc' }
-      })
-
-      return {
-        ...usine,
-        structures
-      }
-    })
-  )
+  // Pour l'instant, les structures organisationnelles ne sont pas disponibles
+  // TODO: Ajouter les modèles et relations nécessaires dans le schéma Prisma
+  const usinesAvecStructures = usines.map((usine) => ({
+    ...usine,
+    structures: [] // Structures temporairement désactivées
+  }))
 
   const perimetres = await prisma.perimetre.findMany({
     where: { actif: true },

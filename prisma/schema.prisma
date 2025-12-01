@@ -646,7 +646,7 @@ model Perimetre {
   // messagesSecurite  MessageSecurite[]     // Commentez temporairement
   pointages         Pointage[]
   salariePerimetres SalariePerimetre[]
-  // usines            Usine[]               // Commentez temporairement
+  usines            Usine[]
   publications      Publication[]
 
   @@map("perimetres")
@@ -674,21 +674,37 @@ model SalariePerimetre {
 // -------------------------------
 
 model Chantier {
-  id         String   @id @default(cuid())
-  nom        String
-  adresse    String?
-  ville      String?
-  codePostal String?
-  latitude   Float?
-  longitude  Float?
-  clientId   String?
-  rdcId      String?
-  actif      Boolean  @default(true)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id                  String   @id @default(cuid())
+  nom                 String
+  adresse             String?
+  ville               String?
+  codePostal          String?
+  latitude            Float?
+  longitude           Float?
+  description         String?
+  clientId            String?
+  dateDebut           DateTime?
+  dateFin             DateTime?
+  budget              Float?
+  statut              String   @default("planifie")
+  rdcId               String?
+  codeAffaireId       String?
+  site                String?
+  secteur             String?
+  numeroCommande      String?
+  donneurOrdreId      String?
+  donneurOrdreNom     String?
+  donneurOrdreTelephone String?
+  donneurOrdreEmail   String?
+  
+  donneurOrdre        DonneurOrdre? @relation(fields: [donneurOrdreId], references: [id], onDelete: SetNull)
+  actif               Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
   client        Client?               @relation(fields: [clientId], references: [id], onDelete: SetNull)
   rdc           Salarie?              @relation("ChantierRDC", fields: [rdcId], references: [id], onDelete: SetNull)
+  codeAffaire   CodeAffaire?          @relation(fields: [codeAffaireId], references: [id], onDelete: SetNull)
   interventions Intervention[]
   affectations  AffectationPlanning[]
 
@@ -710,6 +726,7 @@ model DonneurOrdre {
   updatedAt DateTime @updatedAt
 
   client        Client?        @relation("ClientDonneursOrdre", fields: [clientId], references: [id], onDelete: SetNull)
+  chantiers     Chantier[]
   interventions Intervention[] @relation("InterventionDonneurOrdre")
 
   @@map("donneurs_ordre")
@@ -732,6 +749,7 @@ model CodeAffaire {
   client        Client?        @relation(fields: [clientId], references: [id], onDelete: SetNull)
   rdc           Salarie?       @relation("CodeAffaireRDC", fields: [rdcId], references: [id], onDelete: SetNull)
   interventions Intervention[] @relation("InterventionCodeAffaire")
+  chantiers     Chantier[]
 
   // ⚠️ Ajouter le champ inverse pour Pointage
   pointages Pointage[]
@@ -885,4 +903,28 @@ model AffectationPersonnel {
   // structure StructureOrganisationnelle @relation(fields: [structureId], references: [id], onDelete: Cascade)  // Commentez cette ligne
 
   @@map("affectations_personnel")
+}
+
+// -------------------------------
+// Usine
+// -------------------------------
+
+model Usine {
+  id                    String   @id @default(cuid())
+  nom                   String   @unique
+  secteurActivite        String?
+  adresse               String
+  perimetreId           String
+  numeroUrgence         String?
+  latitudePoste         Float?
+  longitudePoste        Float?
+  latitudeRassemblement Float?
+  longitudeRassemblement Float?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  perimetre Perimetre @relation(fields: [perimetreId], references: [id], onDelete: Cascade)
+  // structures StructureOrganisationnelle[]  // Commentez temporairement
+
+  @@map("usines")
 }
