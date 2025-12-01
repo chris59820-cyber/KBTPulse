@@ -77,7 +77,7 @@ export default function Sidebar() {
 
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-700">
           <p className="text-xs text-gray-400 text-center">
-            © 2024 Gestion BTP
+            © 2026 Gestion BTP
           </p>
         </div>
       </aside>
