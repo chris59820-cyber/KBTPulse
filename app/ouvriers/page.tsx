@@ -49,14 +49,14 @@ export default async function OuvriersPage() {
           })}
         />
         
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6">
           <div className="max-w-7xl mx-auto">
-            <div className="mb-6 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Users className="text-primary-600" size={32} />
+            <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <Users className="text-primary-600 w-6 h-6 sm:w-8 sm:h-8" />
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900">Gestion des ouvriers</h2>
-                  <p className="text-gray-600">Gestion complète des informations ouvriers</p>
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Gestion des ouvriers</h2>
+                  <p className="text-sm sm:text-base text-gray-600 hidden sm:block">Gestion complète des informations ouvriers</p>
                 </div>
               </div>
             </div>

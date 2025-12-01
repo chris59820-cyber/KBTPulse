@@ -76,7 +76,7 @@ export default async function AccueilPage() {
       <div className="flex-1 flex flex-col lg:ml-52">
         <Header title="Accueil" perimetres={perimetres} />
         
-        <main className="flex-1 overflow-y-auto p-6 bg-gray-50">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 bg-gray-50">
           <div className="max-w-7xl mx-auto">
             {/* Messages de sécurité en haut et en évidence */}
             {messagesSecurite.length > 0 && (
@@ -86,14 +86,14 @@ export default async function AccueilPage() {
             )}
 
             {/* Première ligne : Actualités et Chat */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-4 sm:mb-6">
               {/* Actualités */}
-              <div className="lg:col-span-2">
+              <div className="lg:col-span-2 order-1">
                 <ActualitesSection actualites={actualites} />
               </div>
 
               {/* Colonne droite : Chat */}
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6 order-2">
                 <ChatSection 
                   conversations={conversations}
                   userId={user.id}
@@ -106,7 +106,7 @@ export default async function AccueilPage() {
             </div>
 
             {/* Deuxième ligne : Widgets d'information et Boutons d'accès rapide */}
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6 mb-4 sm:mb-6">
               {/* Widget Météo */}
               <div className="lg:col-span-1">
                 <WidgetMeteo perimetre={perimetres[0] || null} />

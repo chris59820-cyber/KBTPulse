@@ -52,18 +52,18 @@ export default async function ChantiersPage() {
           })}
         />
         
-        <main className="flex-1 overflow-y-auto p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Liste des chantiers</h2>
+        <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Liste des chantiers</h2>
             {canCreateChantier && (
-              <Link href="/chantiers/nouveau" className="btn btn-primary flex items-center gap-2">
-                <Plus size={20} />
-                Nouveau chantier
+              <Link href="/chantiers/nouveau" className="btn btn-primary flex items-center gap-2 w-full sm:w-auto justify-center">
+                <Plus size={18} className="sm:w-5 sm:h-5" />
+                <span className="text-sm sm:text-base">Nouveau chantier</span>
               </Link>
             )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {chantiers.map((chantier) => (
               <Link
                 key={chantier.id}

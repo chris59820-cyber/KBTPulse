@@ -43,11 +43,11 @@ export default async function TableauDeBordPage() {
           perimetres={perimetres}
         />
         
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6">
           {/* Filtre de temps */}
-          <div className="mb-6 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <select className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+          <div className="mb-4 sm:mb-6 flex items-center justify-between">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <select className="w-full sm:w-auto px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
                 <option>Dernières 24 heures</option>
                 <option>Dernière semaine</option>
                 <option>Dernier mois</option>

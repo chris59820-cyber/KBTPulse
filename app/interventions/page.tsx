@@ -302,9 +302,9 @@ export default async function InterventionsPage(props: PageProps) {
           })}
         />
         
-        <main className="flex-1 overflow-y-auto p-6">
-  <div className="flex items-center justify-between mb-6">
-    <h2 className="text-2xl font-bold text-gray-900">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6">
+  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
+    <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
       {user?.role === 'OUVRIER'
         ? 'Mes interventions'
         : 'Liste des interventions'}
@@ -313,10 +313,10 @@ export default async function InterventionsPage(props: PageProps) {
     {user?.role !== 'OUVRIER' && (
       <Link
         href="/interventions/nouvelle"
-        className="btn btn-primary flex items-center gap-2"
+        className="btn btn-primary flex items-center gap-2 w-full sm:w-auto justify-center"
       >
-        <Plus size={20} />
-        Nouvelle intervention
+        <Plus size={18} className="sm:w-5 sm:h-5" />
+        <span className="text-sm sm:text-base">Nouvelle intervention</span>
       </Link>
     )}
   </div>
