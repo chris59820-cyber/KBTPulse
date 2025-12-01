@@ -72,11 +72,11 @@ export default async function ModifierChantierPage({ params }: PageProps) {
         id: chantier.client.id,
         nom: chantier.client.nom,
         actif: chantier.client.actif,
-        email: chantier.client.email ?? '',
-        adresse: chantier.client.adresse ?? '',
-        telephone: chantier.client.telephone ?? '',
+        email: chantier.client.email ?? null,
+        adresse: chantier.client.adresse ?? null,
+        telephone: chantier.client.telephone ?? null,
       }
-    : undefined
+    : null
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -85,7 +85,29 @@ export default async function ModifierChantierPage({ params }: PageProps) {
         <Header title={`Modifier le chantier: ${chantier.nom}`} perimetres={perimetres} />
         <main className="flex-1 overflow-y-auto p-6">
           <div className="max-w-4xl mx-auto">
-            <FormModifierChantier chantier={{ ...chantier, client: clientForm }} usines={usines} />
+            <FormModifierChantier 
+              chantier={{
+                id: chantier.id,
+                nom: chantier.nom,
+                adresse: chantier.adresse,
+                description: chantier.description,
+                client: clientForm,
+                clientId: chantier.clientId,
+                dateDebut: chantier.dateDebut,
+                dateFin: chantier.dateFin,
+                budget: chantier.budget,
+                statut: chantier.statut,
+                rdcId: chantier.rdcId,
+                codeAffaireId: chantier.codeAffaireId ?? null,
+                site: chantier.site,
+                secteur: chantier.secteur,
+                numeroCommande: chantier.numeroCommande,
+                donneurOrdreNom: chantier.donneurOrdreNom,
+                donneurOrdreTelephone: chantier.donneurOrdreTelephone,
+                donneurOrdreEmail: chantier.donneurOrdreEmail,
+              } as any}
+              usines={usines} 
+            />
           </div>
         </main>
       </div>
