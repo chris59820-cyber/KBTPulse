@@ -736,6 +736,7 @@ model Perimetre {
   salariePerimetres SalariePerimetre[]
   usines            Usine[]
   publications      Publication[]
+  structuresOrganisationnelles StructureOrganisationnelle[]
 
   @@map("perimetres")
 }
@@ -1012,7 +1013,34 @@ model Usine {
   updatedAt             DateTime @updatedAt
 
   perimetre Perimetre @relation(fields: [perimetreId], references: [id], onDelete: Cascade)
-  // structures StructureOrganisationnelle[]  // Commentez temporairement
+  structures StructureOrganisationnelle[]
 
   @@map("usines")
+}
+
+// -------------------------------
+// Structure Organisationnelle
+// -------------------------------
+
+model StructureOrganisationnelle {
+  id          String    @id @default(cuid())
+  type        String    // secteur, unite, etc.
+  nom         String
+  code        String?
+  description String?
+  numeroPDP   String?
+  parentId    String?
+  ordre       Int?
+  usineId     String?
+  perimetreId String
+  actif       Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  parent   StructureOrganisationnelle? @relation("StructureHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  enfants  StructureOrganisationnelle[] @relation("StructureHierarchy")
+  usine    Usine?                      @relation(fields: [usineId], references: [id], onDelete: SetNull)
+  perimetre Perimetre                  @relation(fields: [perimetreId], references: [id], onDelete: Cascade)
+
+  @@map("structures_organisationnelles")
 }
