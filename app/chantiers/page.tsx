@@ -8,8 +8,11 @@ import { formatDate } from '@/lib/utils'
 import { Plus, Building2, Calendar, User, MapPin, Wrench } from 'lucide-react'
 import Link from 'next/link'
 
-// Fonction pour formater le statut avec les accents et majuscules corrects
-function formatStatut(statut: string): string {
+// --- CORRECTION ICI ---
+// J'ai modifié le type pour accepter null/undefined et ajouté une sécurité
+function formatStatut(statut: string | null | undefined): string {
+  if (!statut) return 'Non défini'; // Sécurité si le statut est vide
+
   const statuts: Record<string, string> = {
     'planifie': 'Planifié',
     'en_attente': 'En attente',
@@ -17,7 +20,8 @@ function formatStatut(statut: string): string {
     'termine': 'Terminé',
     'annule': 'Annulé'
   }
-  return statuts[statut] || statut.replace('_', ' ')
+  // On utilise ?.replace par sécurité supplémentaire, ou une chaîne vide par défaut
+  return statuts[statut] || (statut?.replace('_', ' ') || statut)
 }
 
 export default async function ChantiersPage() {
@@ -89,6 +93,7 @@ export default async function ChantiersPage() {
                     chantier.statut === 'annule' ? 'badge-danger' :
                     'badge-warning'
                   }`}>
+                    {/* Appel sécurisé de la fonction */}
                     {formatStatut(chantier.statut)}
                   </span>
                 </div>
