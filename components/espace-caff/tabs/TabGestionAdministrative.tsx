@@ -31,7 +31,6 @@ interface Conge {
 interface CodeAffaire {
   id: string
   code: string
-  libelle: string
   description: string | null
   client: string | null
   activite: string | null
@@ -75,7 +74,6 @@ export default function TabGestionAdministrative({ user }: TabGestionAdministrat
   const [activeView, setActiveView] = useState<'conges' | 'codes'>('conges')
   const [formData, setFormData] = useState({
     code: '',
-    libelle: '',
     description: '',
     client: '',
     activite: '',
@@ -145,7 +143,6 @@ export default function TabGestionAdministrative({ user }: TabGestionAdministrat
     setEditingCodeId(code.id)
     setFormData({
       code: code.code,
-      libelle: code.libelle,
       description: code.description || '',
       client: code.client || '',
       activite: code.activite || '',
@@ -168,7 +165,6 @@ export default function TabGestionAdministrative({ user }: TabGestionAdministrat
     setShowCodeForm(false)
     setFormData({
       code: '',
-      libelle: '',
       description: '',
       client: '',
       activite: '',
@@ -293,15 +289,15 @@ export default function TabGestionAdministrative({ user }: TabGestionAdministrat
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Libellé *
+                  Description *
                 </label>
                 <input
                   type="text"
                   required
-                  value={formData.libelle}
-                  onChange={(e) => setFormData({ ...formData, libelle: e.target.value })}
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   className="input"
-                  placeholder="Nom du code affaire"
+                  placeholder="Description du code affaire"
                 />
               </div>
 
@@ -580,7 +576,7 @@ export default function TabGestionAdministrative({ user }: TabGestionAdministrat
                         </h5>
                         <Edit size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                       </div>
-                      <p className="text-sm text-gray-600 mb-2">{code.libelle}</p>
+                      <p className="text-sm text-gray-600 mb-2">{code.description || ''}</p>
                       {code.client && (
                         <p className="text-xs text-gray-500 mb-1">Client: {code.client}</p>
                       )}

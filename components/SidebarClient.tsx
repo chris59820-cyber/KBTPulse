@@ -110,7 +110,7 @@ export default function SidebarClient({ user }: SidebarClientProps) {
         )}
       >
         <div className="p-3 border-b border-gray-700">
-          <Logo size="md" showText={true} variant="dark" />
+          <Logo size="sm" showText={true} variant="dark" />
           {user && (
             <div className="mt-2 pt-2 border-t border-gray-700">
               <p className="text-xs font-medium text-white truncate">
@@ -156,7 +156,7 @@ export default function SidebarClient({ user }: SidebarClientProps) {
             </button>
           )}
           <p className="text-xs text-gray-400 text-center">
-            © 2026 KBTPulse
+            © 2024 KBTPulse
           </p>
         </div>
       </aside>

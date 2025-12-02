@@ -77,8 +77,7 @@ interface Usine {
 interface CodeAffaire {
   id: string
   code: string
-  libelle: string
-  chantierId: string | null
+  description: string | null
   actif: boolean
 }
 
@@ -1406,7 +1405,7 @@ export default function FormNouvelleIntervention({
                 <option value="">Sélectionner un code affaire</option>
                 {codesAffaireFiltres.map((codeAffaire) => (
                   <option key={codeAffaire.id} value={codeAffaire.id}>
-                    {codeAffaire.code} - {codeAffaire.libelle}
+                    {codeAffaire.code} - {codeAffaire.description || ''}
                   </option>
                 ))}
               </select>

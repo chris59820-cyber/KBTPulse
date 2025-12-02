@@ -72,11 +72,7 @@ export default async function InterventionsPage(props: PageProps) {
     // Filtrer par code affaire via le chantier
     where.chantier = {
       ...where.chantier,
-      codesAffaire: {
-        some: {
-          id: searchParams.codeAffaire
-        }
-      }
+      codeAffaireId: searchParams.codeAffaire
     }
   }
   
@@ -109,11 +105,11 @@ export default async function InterventionsPage(props: PageProps) {
       select: {
         id: true,
         client: true,
-        codesAffaire: {
+        codeAffaire: {
           select: {
             id: true,
             code: true,
-            activite: true
+            description: true
           }
         }
       }
@@ -146,10 +142,10 @@ export default async function InterventionsPage(props: PageProps) {
       .filter((c): c is string => !!c)
   )).sort()
   
-  // Extraire les activités uniques
+  // Extraire les activités uniques (utiliser la description du code affaire)
   const activites = Array.from(new Set(
     allChantiers
-      .flatMap(c => c.codesAffaire.map(ca => ca.activite))
+      .map(c => c.codeAffaire?.description)
       .filter((a): a is string => !!a)
   )).sort()
   
@@ -157,7 +153,8 @@ export default async function InterventionsPage(props: PageProps) {
   const codesAffaire = Array.from(
     new Map(
       allChantiers
-        .flatMap(c => c.codesAffaire)
+        .map(c => c.codeAffaire)
+        .filter((ca): ca is NonNullable<typeof ca> => !!ca)
         .map(ca => [ca.id, ca])
     ).values()
   ).sort((a, b) => a.code.localeCompare(b.code))
@@ -184,7 +181,7 @@ export default async function InterventionsPage(props: PageProps) {
               include: {
                 chantier: {
                   include: {
-                    codesAffaire: true
+                    codeAffaire: true
                   }
                 },
                 salarie: true,
@@ -199,7 +196,7 @@ export default async function InterventionsPage(props: PageProps) {
                   select: {
                     id: true,
                     code: true,
-                    libelle: true
+                    description: true
                   }
                 },
                 affectationsIntervention: {
@@ -228,7 +225,7 @@ export default async function InterventionsPage(props: PageProps) {
     })
 
     // Extraire les interventions des affectations
-    interventions = affectations.map(aff => aff.intervention)
+    interventions = affectations.map((aff: any) => aff.intervention)
   } else {
     // Pour les autres rôles, afficher toutes les interventions
     interventions = await prisma.intervention.findMany({
@@ -236,7 +233,7 @@ export default async function InterventionsPage(props: PageProps) {
       include: {
         chantier: {
           include: {
-            codesAffaire: true
+            codeAffaire: true
           }
         },
         salarie: true,
@@ -251,7 +248,7 @@ export default async function InterventionsPage(props: PageProps) {
           select: {
             id: true,
             code: true,
-            libelle: true
+            description: true
           }
         },
         affectationsIntervention: {
@@ -278,9 +275,7 @@ export default async function InterventionsPage(props: PageProps) {
     // Filtrer par activité si spécifié (côté serveur après récupération)
     if (searchParams.activite) {
       interventions = interventions.filter(intervention =>
-        intervention.chantier?.codesAffaire?.some(
-          (ca: any) => ca.activite === searchParams.activite
-        )
+        intervention.chantier?.codeAffaire?.description === searchParams.activite
       )
     }
   } catch (error) {
@@ -302,9 +297,9 @@ export default async function InterventionsPage(props: PageProps) {
           })}
         />
         
-        <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6">
-  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
-    <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
+        <main className="flex-1 overflow-y-auto p-6">
+  <div className="flex items-center justify-between mb-6">
+    <h2 className="text-2xl font-bold text-gray-900">
       {user?.role === 'OUVRIER'
         ? 'Mes interventions'
         : 'Liste des interventions'}
@@ -313,10 +308,10 @@ export default async function InterventionsPage(props: PageProps) {
     {user?.role !== 'OUVRIER' && (
       <Link
         href="/interventions/nouvelle"
-        className="btn btn-primary flex items-center gap-2 w-full sm:w-auto justify-center"
+        className="btn btn-primary flex items-center gap-2"
       >
-        <Plus size={18} className="sm:w-5 sm:h-5" />
-        <span className="text-sm sm:text-base">Nouvelle intervention</span>
+        <Plus size={20} />
+        Nouvelle intervention
       </Link>
     )}
   </div>
@@ -375,7 +370,7 @@ export default async function InterventionsPage(props: PageProps) {
                             <div className="flex items-center gap-2 text-gray-600">
                               <FileText size={16} className="text-gray-400" />
                               <span className="text-gray-500">Code affaire:</span>
-                              <span className="font-medium">{intervention.codeAffaire.code} - {intervention.codeAffaire.libelle}</span>
+                              <span className="font-medium">{intervention.codeAffaire.code} - {intervention.codeAffaire.description || ''}</span>
                             </div>
                           )}
                           {intervention.rdc && (

@@ -16,24 +16,13 @@ export async function GET(request: NextRequest) {
 
     const codesAffaire = await prisma.codeAffaire.findMany({
       include: {
-        client: {
-          select: {
-            id: true,
-            nom: true
-          }
-        },
+        chantier: true,
         rdc: {
           select: {
             id: true,
             nom: true,
             prenom: true,
             matricule: true
-          }
-        },
-        chantiers: {
-          select: {
-            id: true,
-            nom: true
           }
         }
       },
@@ -63,11 +52,11 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { code, description, clientId, rdcId } = body
+    const { code, description, client, activite, budget, dateDebut, dateFin, chantierId, rdcId, codeContrat } = body
 
-    if (!code) {
+    if (!code || !description) {
       return NextResponse.json(
-        { error: 'Le code est requis' },
+        { error: 'Le code et la description sont requis' },
         { status: 400 }
       )
     }
@@ -76,8 +65,15 @@ export async function POST(request: NextRequest) {
       data: {
         code: code.toUpperCase(),
         description: description || null,
-        clientId: clientId || null,
+        client: client || null,
+        activite: activite || null,
+        budget: budget ? parseFloat(budget) : null,
+        dateDebut: dateDebut ? new Date(dateDebut) : null,
+        dateFin: dateFin ? new Date(dateFin) : null,
+        chantierId: chantierId || null,
         rdcId: rdcId || null,
+        codeContrat: codeContrat === true,
+        creePar: user.id,
         actif: true
       }
     })

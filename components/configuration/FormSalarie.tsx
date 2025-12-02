@@ -157,7 +157,7 @@ export default function FormSalarie({ perimetres, salarie, onSave }: FormSalarie
       <div>
         <h4 className="text-sm font-semibold text-gray-700 mb-3">Informations personnelles</h4>
         <div className="space-y-3">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Nom *</label>
               <input
@@ -203,7 +203,7 @@ export default function FormSalarie({ perimetres, salarie, onSave }: FormSalarie
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Téléphone</label>
               <input

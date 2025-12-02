@@ -9,9 +9,9 @@ interface LogoProps {
 
 export default function Logo({ size = 'md', showText = true, className = '', variant = 'light' }: LogoProps) {
   const sizes = {
-    sm: { icon: 32, text: 'text-base' },
-    md: { icon: 40, text: 'text-lg' },
-    lg: { icon: 56, text: 'text-3xl' }
+    sm: { icon: 24, text: 'text-sm' },
+    md: { icon: 32, text: 'text-base' },
+    lg: { icon: 48, text: 'text-2xl' }
   }
 
   const { icon: iconSize, text: textSize } = sizes[size]

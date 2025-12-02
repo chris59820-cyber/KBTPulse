@@ -58,7 +58,7 @@ export default async function ModifierInterventionPage({ params }: PageProps) {
       select: {
         id: true,
         code: true,
-        libelle: true
+        description: true
       }
     })
   }
@@ -128,8 +128,7 @@ export default async function ModifierInterventionPage({ params }: PageProps) {
       select: {
         id: true,
         code: true,
-        libelle: true,
-        chantierId: true,
+        description: true,
         actif: true
       }
     })
