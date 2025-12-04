@@ -72,7 +72,11 @@ export default async function InterventionsPage(props: PageProps) {
     // Filtrer par code affaire via le chantier
     where.chantier = {
       ...where.chantier,
-      codeAffaireId: searchParams.codeAffaire
+      codesAffaire: {
+        some: {
+          id: searchParams.codeAffaire
+        }
+      }
     }
   }
   
@@ -105,11 +109,11 @@ export default async function InterventionsPage(props: PageProps) {
       select: {
         id: true,
         client: true,
-        codeAffaire: {
+        codesAffaire: {
           select: {
             id: true,
             code: true,
-            description: true
+            activite: true
           }
         }
       }
@@ -142,10 +146,10 @@ export default async function InterventionsPage(props: PageProps) {
       .filter((c): c is string => !!c)
   )).sort()
   
-  // Extraire les activités uniques (utiliser la description du code affaire)
+  // Extraire les activités uniques
   const activites = Array.from(new Set(
     allChantiers
-      .map(c => c.codeAffaire?.description)
+      .flatMap(c => c.codesAffaire.map(ca => ca.activite))
       .filter((a): a is string => !!a)
   )).sort()
   
@@ -153,8 +157,7 @@ export default async function InterventionsPage(props: PageProps) {
   const codesAffaire = Array.from(
     new Map(
       allChantiers
-        .map(c => c.codeAffaire)
-        .filter((ca): ca is NonNullable<typeof ca> => !!ca)
+        .flatMap(c => c.codesAffaire)
         .map(ca => [ca.id, ca])
     ).values()
   ).sort((a, b) => a.code.localeCompare(b.code))
@@ -181,7 +184,7 @@ export default async function InterventionsPage(props: PageProps) {
               include: {
                 chantier: {
                   include: {
-                    codeAffaire: true
+                    codesAffaire: true
                   }
                 },
                 salarie: true,
@@ -196,7 +199,7 @@ export default async function InterventionsPage(props: PageProps) {
                   select: {
                     id: true,
                     code: true,
-                    description: true
+                    libelle: true
                   }
                 },
                 affectationsIntervention: {
@@ -225,7 +228,7 @@ export default async function InterventionsPage(props: PageProps) {
     })
 
     // Extraire les interventions des affectations
-    interventions = affectations.map((aff: any) => aff.intervention)
+    interventions = affectations.map(aff => aff.intervention)
   } else {
     // Pour les autres rôles, afficher toutes les interventions
     interventions = await prisma.intervention.findMany({
@@ -233,7 +236,7 @@ export default async function InterventionsPage(props: PageProps) {
       include: {
         chantier: {
           include: {
-            codeAffaire: true
+            codesAffaire: true
           }
         },
         salarie: true,
@@ -248,7 +251,7 @@ export default async function InterventionsPage(props: PageProps) {
           select: {
             id: true,
             code: true,
-            description: true
+            libelle: true
           }
         },
         affectationsIntervention: {
@@ -275,7 +278,9 @@ export default async function InterventionsPage(props: PageProps) {
     // Filtrer par activité si spécifié (côté serveur après récupération)
     if (searchParams.activite) {
       interventions = interventions.filter(intervention =>
-        intervention.chantier?.codeAffaire?.description === searchParams.activite
+        intervention.chantier?.codesAffaire?.some(
+          (ca: any) => ca.activite === searchParams.activite
+        )
       )
     }
   } catch (error) {
@@ -370,7 +375,7 @@ export default async function InterventionsPage(props: PageProps) {
                             <div className="flex items-center gap-2 text-gray-600">
                               <FileText size={16} className="text-gray-400" />
                               <span className="text-gray-500">Code affaire:</span>
-                              <span className="font-medium">{intervention.codeAffaire.code} - {intervention.codeAffaire.description || ''}</span>
+                              <span className="font-medium">{intervention.codeAffaire.code} - {intervention.codeAffaire.libelle}</span>
                             </div>
                           )}
                           {intervention.rdc && (

@@ -138,7 +138,7 @@ export default async function ConfigurationPage() {
                   <h3 className="text-lg font-semibold text-gray-900">Administration Base de données</h3>
                 </div>
                 <p className="text-sm text-gray-600 mb-4">
-                  Accéder et modifier l'ensemble des tableaux de la base de données
+                  Accéder et modifier l'ensemble des tableaux avec leurs colonnes correspondant aux modules de saisie
                 </p>
                 <span className="text-sm text-yellow-700 hover:text-yellow-800 font-medium">
                   Accéder →

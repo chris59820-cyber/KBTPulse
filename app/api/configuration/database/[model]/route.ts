@@ -125,13 +125,16 @@ export async function POST(
     const body = await request.json()
     const model = prisma[prismaModel] as any
 
-    // Nettoyer les champs null ou vides
+    // Nettoyer les champs null ou vides et convertir les types
     const cleanedData: any = {}
     for (const [key, value] of Object.entries(body)) {
-      if (value !== null && value !== '') {
+      if (value !== null && value !== '' && value !== undefined) {
         // Convertir les dates si nécessaire
-        if (key.includes('date') || key.includes('Date') || key.includes('createdAt') || key.includes('updatedAt')) {
+        if (key.includes('date') || key.includes('Date') || key === 'createdAt' || key === 'updatedAt') {
           cleanedData[key] = value ? new Date(value as string) : undefined
+        } else if (typeof value === 'string' && !isNaN(Number(value)) && (key.includes('Id') || key.includes('id'))) {
+          // Garder les IDs comme strings
+          cleanedData[key] = value
         } else {
           cleanedData[key] = value
         }

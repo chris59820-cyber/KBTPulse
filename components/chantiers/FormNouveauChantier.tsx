@@ -13,7 +13,7 @@ interface Usine {
 interface CodeAffaire {
   id: string
   code: string
-  description: string | null
+  libelle: string
   actif: boolean
 }
 

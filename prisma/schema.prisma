@@ -807,9 +807,13 @@ model Chantier {
 model DonneurOrdre {
   id        String   @id @default(cuid())
   nom       String
+  prenom    String?
+  fonction  String?
+  entreprise String?
   telephone String?
   email     String?
   clientId  String?
+  commentaire String?
   actif     Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

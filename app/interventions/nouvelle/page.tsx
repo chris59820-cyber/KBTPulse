@@ -55,7 +55,8 @@ export default async function NouvelleInterventionPage(props: PageProps) {
       select: {
         id: true,
         code: true,
-        description: true,
+        libelle: true,
+        chantierId: true,
         actif: true
       }
     })
