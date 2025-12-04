@@ -129,6 +129,21 @@ export default async function ConfigurationPage() {
                   Accéder →
                 </span>
               </a>
+
+              <a href="/configuration/base-de-donnees" className="card hover:shadow-lg transition-shadow cursor-pointer border-2 border-yellow-300 bg-yellow-50">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="p-3 bg-yellow-100 rounded-lg">
+                    <Database className="text-yellow-700" size={24} />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900">Administration Base de données</h3>
+                </div>
+                <p className="text-sm text-gray-600 mb-4">
+                  Accéder et modifier l'ensemble des tableaux de la base de données
+                </p>
+                <span className="text-sm text-yellow-700 hover:text-yellow-800 font-medium">
+                  Accéder →
+                </span>
+              </a>
             </div>
 
             <div className="card mt-6">
