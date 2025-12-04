@@ -72,11 +72,7 @@ export default async function InterventionsPage(props: PageProps) {
     // Filtrer par code affaire via le chantier
     where.chantier = {
       ...where.chantier,
-      codesAffaire: {
-        some: {
-          id: searchParams.codeAffaire
-        }
-      }
+      codeAffaireId: searchParams.codeAffaire
     }
   }
   
@@ -109,11 +105,11 @@ export default async function InterventionsPage(props: PageProps) {
       select: {
         id: true,
         client: true,
-        codesAffaire: {
+        codeAffaire: {
           select: {
             id: true,
             code: true,
-            activite: true
+            description: true
           }
         }
       }
@@ -146,10 +142,10 @@ export default async function InterventionsPage(props: PageProps) {
       .filter((c): c is string => !!c)
   )).sort()
   
-  // Extraire les activités uniques
+  // Extraire les activités uniques (descriptions des codes affaire)
   const activites = Array.from(new Set(
     allChantiers
-      .flatMap(c => c.codesAffaire.map(ca => ca.activite))
+      .map(c => c.codeAffaire?.description)
       .filter((a): a is string => !!a)
   )).sort()
   
@@ -157,7 +153,8 @@ export default async function InterventionsPage(props: PageProps) {
   const codesAffaire = Array.from(
     new Map(
       allChantiers
-        .flatMap(c => c.codesAffaire)
+        .map(c => c.codeAffaire)
+        .filter((ca): ca is NonNullable<typeof ca> => !!ca)
         .map(ca => [ca.id, ca])
     ).values()
   ).sort((a, b) => a.code.localeCompare(b.code))
@@ -184,7 +181,7 @@ export default async function InterventionsPage(props: PageProps) {
               include: {
                 chantier: {
                   include: {
-                    codesAffaire: true
+                    codeAffaire: true
                   }
                 },
                 salarie: true,
@@ -199,7 +196,7 @@ export default async function InterventionsPage(props: PageProps) {
                   select: {
                     id: true,
                     code: true,
-                    libelle: true
+                    description: true
                   }
                 },
                 affectationsIntervention: {
@@ -236,7 +233,7 @@ export default async function InterventionsPage(props: PageProps) {
       include: {
         chantier: {
           include: {
-            codesAffaire: true
+            codeAffaire: true
           }
         },
         salarie: true,
@@ -278,9 +275,7 @@ export default async function InterventionsPage(props: PageProps) {
     // Filtrer par activité si spécifié (côté serveur après récupération)
     if (searchParams.activite) {
       interventions = interventions.filter(intervention =>
-        intervention.chantier?.codesAffaire?.some(
-          (ca: any) => ca.activite === searchParams.activite
-        )
+        intervention.chantier?.codeAffaire?.description === searchParams.activite
       )
     }
   } catch (error) {

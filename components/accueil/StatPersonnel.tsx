@@ -14,8 +14,7 @@ export default async function StatPersonnel({ perimetreId }: StatPersonnelProps)
       ...(perimetreId ? {
         salariePerimetres: {
           some: {
-            perimetreId,
-            dateFin: null
+            perimetreId
           }
         }
       } : {})
