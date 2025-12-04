@@ -835,6 +835,7 @@ model CodeAffaire {
   description String?
   clientId    String?
   rdcId       String?
+  codeContrat Boolean  @default(false)
   actif       Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

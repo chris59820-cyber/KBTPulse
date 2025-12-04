@@ -20,7 +20,12 @@ export async function GET(
     const codeAffaire = await prisma.codeAffaire.findUnique({
       where: { id: params.id },
       include: {
-        chantier: true,
+        client: {
+          select: {
+            id: true,
+            nom: true
+          }
+        },
         rdc: {
           select: {
             id: true,
@@ -65,11 +70,11 @@ export async function PUT(
     }
 
     const body = await request.json()
-    const { code, libelle, description, client, activite, budget, dateDebut, dateFin, chantierId, rdcId, actif, codeContrat } = body
+    const { code, description, clientId, rdcId, codeContrat, actif } = body
 
-    if (!code || !libelle) {
+    if (!code || !description) {
       return NextResponse.json(
-        { error: 'Le code et le libellé sont requis' },
+        { error: 'Le code et la description sont requis' },
         { status: 400 }
       )
     }
@@ -93,14 +98,8 @@ export async function PUT(
       where: { id: params.id },
       data: {
         code: code.toUpperCase(),
-        libelle,
         description: description || null,
-        client: client || null,
-        activite: activite || null,
-        budget: budget ? parseFloat(budget) : null,
-        dateDebut: dateDebut ? new Date(dateDebut) : null,
-        dateFin: dateFin ? new Date(dateFin) : null,
-        chantierId: chantierId || null,
+        clientId: clientId || null,
         rdcId: rdcId || null,
         codeContrat: codeContrat !== undefined ? codeContrat : false,
         actif: actif !== undefined ? actif : true

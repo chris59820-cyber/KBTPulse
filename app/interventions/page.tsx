@@ -248,7 +248,7 @@ export default async function InterventionsPage(props: PageProps) {
           select: {
             id: true,
             code: true,
-            libelle: true
+            description: true
           }
         },
         affectationsIntervention: {
@@ -280,6 +280,7 @@ export default async function InterventionsPage(props: PageProps) {
     }
   } catch (error) {
     console.error('Erreur lors de la récupération des interventions:', error)
+    console.error('Détails de l\'erreur:', error instanceof Error ? error.message : error)
     // En cas d'erreur, retourner un tableau vide pour éviter de casser la page
     interventions = []
   }

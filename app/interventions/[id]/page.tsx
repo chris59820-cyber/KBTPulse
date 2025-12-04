@@ -81,7 +81,7 @@ export default async function InterventionDetailPage({ params }: PageProps) {
       select: {
         id: true,
         code: true,
-        libelle: true
+        description: true
       }
     })
   }
