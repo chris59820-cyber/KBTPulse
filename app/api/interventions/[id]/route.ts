@@ -166,10 +166,84 @@ export async function PUT(
     // Log pour déboguer
     console.log('Update data:', JSON.stringify(updateData, null, 2))
 
-    // Mettre à jour l'intervention
-    const intervention = await prisma.intervention.update({
-      where: { id: params.id },
-      data: updateData
+    // Mettre à jour l'intervention dans une transaction
+    const intervention = await prisma.$transaction(async (tx) => {
+      // Mettre à jour l'intervention
+      const updatedIntervention = await tx.intervention.update({
+        where: { id: params.id },
+        data: updateData
+      })
+
+      // Traiter les affectations si fournies
+      const affectationsJson = formData.get('affectations') as string
+      if (affectationsJson) {
+        try {
+          const affectations: Array<{ salarieId: string; role: string }> = JSON.parse(affectationsJson)
+          
+          // Utiliser les dates de l'intervention mise à jour
+          const dateDebutAffectation = updatedIntervention.dateDebut || new Date()
+          const dateFinAffectation = updatedIntervention.dateFin
+          
+          // Récupérer les affectations existantes
+          const existingAffectations = await tx.affectationIntervention.findMany({
+            where: { interventionId: params.id }
+          })
+
+          // Identifier les affectations à supprimer (celles qui ne sont plus dans la nouvelle liste)
+          const newSalarieIds = new Set(affectations.map(aff => aff.salarieId).filter(id => id))
+          const toDelete = existingAffectations.filter(existing => !newSalarieIds.has(existing.salarieId))
+
+          // Supprimer les affectations qui ne sont plus dans la liste
+          for (const affToDelete of toDelete) {
+            await tx.affectationIntervention.update({
+              where: { id: affToDelete.id },
+              data: { actif: false }
+            })
+          }
+
+          // Mettre à jour ou créer les affectations
+          for (const aff of affectations) {
+            if (!aff.salarieId) continue
+
+            // Chercher une affectation existante pour ce salarié
+            const existingAffectation = await tx.affectationIntervention.findFirst({
+              where: {
+                interventionId: params.id,
+                salarieId: aff.salarieId
+              }
+            })
+
+            if (existingAffectation) {
+              // Mettre à jour l'affectation existante
+              await tx.affectationIntervention.update({
+                where: { id: existingAffectation.id },
+                data: {
+                  role: aff.role as any,
+                  dateDebut: dateDebutAffectation instanceof Date ? dateDebutAffectation : new Date(dateDebutAffectation),
+                  dateFin: dateFinAffectation ? (dateFinAffectation instanceof Date ? dateFinAffectation : new Date(dateFinAffectation)) : null,
+                  actif: true
+                }
+              })
+            } else {
+              // Créer une nouvelle affectation
+              await tx.affectationIntervention.create({
+                data: {
+                  interventionId: params.id,
+                  salarieId: aff.salarieId,
+                  role: aff.role as any,
+                  dateDebut: dateDebutAffectation instanceof Date ? dateDebutAffectation : new Date(dateDebutAffectation),
+                  dateFin: dateFinAffectation ? (dateFinAffectation instanceof Date ? dateFinAffectation : new Date(dateFinAffectation)) : null
+                }
+              })
+            }
+          }
+        } catch (e) {
+          console.error('Erreur lors de la mise à jour des affectations:', e)
+          // Ne pas faire échouer la transaction si les affectations échouent
+        }
+      }
+
+      return updatedIntervention
     })
 
     return NextResponse.json(intervention)

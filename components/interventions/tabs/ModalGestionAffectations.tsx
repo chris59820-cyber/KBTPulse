@@ -27,6 +27,8 @@ interface Affectation {
 interface ModalGestionAffectationsProps {
   interventionId: string
   affectations: Affectation[]
+  dateDebut?: Date | string | null
+  dateFin?: Date | string | null
   onClose: () => void
   onSave: () => void
 }
@@ -34,16 +36,39 @@ interface ModalGestionAffectationsProps {
 export default function ModalGestionAffectations({
   interventionId,
   affectations,
+  dateDebut: interventionDateDebut,
+  dateFin: interventionDateFin,
   onClose,
   onSave
 }: ModalGestionAffectationsProps) {
   const [salaries, setSalaries] = useState<Salarie[]>([])
   const [selectedSalarie, setSelectedSalarie] = useState<string>('')
   const [selectedRole, setSelectedRole] = useState<'chef_equipe' | 'ouvrier'>('ouvrier')
-  const [dateDebut, setDateDebut] = useState(new Date().toISOString().split('T')[0])
-  const [dateFin, setDateFin] = useState('')
   const [loading, setLoading] = useState(false)
   const [localAffectations, setLocalAffectations] = useState<Affectation[]>(affectations)
+
+  // Convertir les dates de l'intervention en format string pour l'API
+  const getDateDebut = (): string => {
+    if (!interventionDateDebut) return new Date().toISOString().split('T')[0]
+    if (interventionDateDebut instanceof Date) {
+      return interventionDateDebut.toISOString().split('T')[0]
+    }
+    if (typeof interventionDateDebut === 'string') {
+      return new Date(interventionDateDebut).toISOString().split('T')[0]
+    }
+    return new Date().toISOString().split('T')[0]
+  }
+
+  const getDateFin = (): string | null => {
+    if (!interventionDateFin) return null
+    if (interventionDateFin instanceof Date) {
+      return interventionDateFin.toISOString().split('T')[0]
+    }
+    if (typeof interventionDateFin === 'string') {
+      return new Date(interventionDateFin).toISOString().split('T')[0]
+    }
+    return null
+  }
 
   useEffect(() => {
     fetchSalaries()
@@ -77,9 +102,8 @@ export default function ModalGestionAffectations({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           salarieId: selectedSalarie,
-          role: selectedRole,
-          dateDebut: new Date(dateDebut),
-          dateFin: dateFin ? new Date(dateFin) : null
+          role: selectedRole
+          // Les dates seront automatiquement utilisées depuis l'intervention dans l'API
         })
       })
 
@@ -87,8 +111,6 @@ export default function ModalGestionAffectations({
         const newAffectation = await response.json()
         setLocalAffectations([...localAffectations, newAffectation])
         setSelectedSalarie('')
-        setDateDebut(new Date().toISOString().split('T')[0])
-        setDateFin('')
         setSelectedRole('ouvrier')
         // Recharger la liste des salariés pour exclure le nouveau salarié affecté
         fetchSalaries()
@@ -197,31 +219,20 @@ export default function ModalGestionAffectations({
                 </select>
               </div>
 
-              {/* Dates */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Date de début *
-                  </label>
-                  <input
-                    type="date"
-                    value={dateDebut}
-                    onChange={(e) => setDateDebut(e.target.value)}
-                    className="input w-full"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Date de fin (optionnelle)
-                  </label>
-                  <input
-                    type="date"
-                    value={dateFin}
-                    onChange={(e) => setDateFin(e.target.value)}
-                    className="input w-full"
-                  />
-                </div>
+              {/* Information sur les dates */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <p className="text-sm text-blue-800">
+                  <strong>Période d'affectation :</strong> Le salarié sera affecté pendant toute la durée de l'intervention
+                  {interventionDateDebut && (
+                    <span> du {formatDate(interventionDateDebut)}</span>
+                  )}
+                  {interventionDateFin && (
+                    <span> au {formatDate(interventionDateFin)}</span>
+                  )}
+                  {!interventionDateDebut && !interventionDateFin && (
+                    <span> (dates à définir)</span>
+                  )}
+                </p>
               </div>
 
               {/* Bouton d'ajout */}

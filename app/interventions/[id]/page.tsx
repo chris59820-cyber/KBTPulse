@@ -36,7 +36,17 @@ export default async function InterventionDetailPage({ params }: PageProps) {
       affectationsIntervention: {
         where: { actif: true },
         include: {
-          salarie: true
+          salarie: {
+            select: {
+              id: true,
+              nom: true,
+              prenom: true,
+              email: true,
+              telephone: true,
+              photoUrl: true,
+              poste: true
+            }
+          }
         }
       },
       ressourcesIntervention: true,

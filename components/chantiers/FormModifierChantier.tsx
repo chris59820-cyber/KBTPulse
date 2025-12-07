@@ -49,6 +49,7 @@ interface Chantier {
   site: string | null
   secteur: string | null
   numeroCommande: string | null
+  donneurOrdreId: string | null
   donneurOrdreNom: string | null
   donneurOrdreTelephone: string | null
   donneurOrdreEmail: string | null
@@ -175,7 +176,7 @@ export default function FormModifierChantier({ chantier, usines }: FormModifierC
     budget: chantier.budget?.toString() || '',
     statut: chantier.statut || 'planifie',
     numeroCommande: chantier.numeroCommande || '',
-    donneurOrdreId: (chantier as any).donneurOrdreId || ''
+    donneurOrdreId: chantier.donneurOrdreId || ''
   })
 
   const handleSubmit = async (e: React.FormEvent) => {

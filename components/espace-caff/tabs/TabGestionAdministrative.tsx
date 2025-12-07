@@ -31,19 +31,20 @@ interface Conge {
 interface CodeAffaire {
   id: string
   code: string
+  libelle: string
   description: string | null
-  clientId: string | null
-  codeContrat: boolean
+  client: string | null
+  activite: string | null
+  budget: number | null
+  dateDebut: Date | null
+  dateFin: Date | null
   actif: boolean
+  codeContrat: boolean
   rdcId: string | null
   rdc?: {
     id: string
     nom: string
     prenom: string
-  } | null
-  client?: {
-    id: string
-    nom: string
   } | null
 }
 
@@ -54,27 +55,36 @@ interface RDC {
   matricule: string | null
 }
 
-interface Client {
-  id: string
-  nom: string
+// Fonction pour formater l'activité avec les accents et majuscules corrects
+const formatActivite = (activite: string | null | undefined): string => {
+  if (!activite) return ''
+  // Remplacer "Echafaudage" par "Échafaudage"
+  if (activite === 'Echafaudage' || activite === 'echafaudage') {
+    return 'Échafaudage'
+  }
+  return activite
 }
 
 export default function TabGestionAdministrative({ user }: TabGestionAdministrativeProps) {
   const [conges, setConges] = useState<Conge[]>([])
   const [codesAffaire, setCodesAffaire] = useState<CodeAffaire[]>([])
   const [rdcList, setRdcList] = useState<RDC[]>([])
-  const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)
   const [showCodeForm, setShowCodeForm] = useState(false)
   const [editingCodeId, setEditingCodeId] = useState<string | null>(null)
   const [activeView, setActiveView] = useState<'conges' | 'codes'>('conges')
   const [formData, setFormData] = useState({
     code: '',
+    libelle: '',
     description: '',
-    clientId: '',
+    client: '',
+    activite: '',
+    budget: '',
+    dateDebut: '',
+    dateFin: '',
     rdcId: '',
-    codeContrat: false,
-    actif: true
+    actif: true,
+    codeContrat: false
   })
 
   useEffect(() => {
@@ -83,11 +93,10 @@ export default function TabGestionAdministrative({ user }: TabGestionAdministrat
 
   const loadData = async () => {
     try {
-      const [congesRes, codesRes, rdcRes, clientsRes] = await Promise.all([
+      const [congesRes, codesRes, rdcRes] = await Promise.all([
         fetch('/api/espace-caff/conges?statut=en_attente'),
         fetch('/api/espace-caff/codes-affaire'),
-        fetch('/api/configuration/salaries?role=RDC'),
-        fetch('/api/clients')
+        fetch('/api/configuration/salaries?role=RDC')
       ])
 
       if (congesRes.ok) {
@@ -107,11 +116,6 @@ export default function TabGestionAdministrative({ user }: TabGestionAdministrat
           s.statut === 'actif' && (s.niveauAcces === 'RDC' || s.user?.role === 'RDC')
         )
         setRdcList(rdcActifs)
-      }
-
-      if (clientsRes.ok) {
-        const clientsData = await clientsRes.json()
-        setClients(clientsData.filter((c: any) => c.actif))
       }
     } catch (error) {
       console.error('Erreur lors du chargement:', error)
@@ -141,11 +145,16 @@ export default function TabGestionAdministrative({ user }: TabGestionAdministrat
     setEditingCodeId(code.id)
     setFormData({
       code: code.code,
+      libelle: code.libelle,
       description: code.description || '',
-      clientId: code.clientId || code.client?.id || '',
+      client: code.client || '',
+      activite: code.activite || '',
+      budget: code.budget ? code.budget.toString() : '',
+      dateDebut: code.dateDebut ? new Date(code.dateDebut).toISOString().split('T')[0] : '',
+      dateFin: code.dateFin ? new Date(code.dateFin).toISOString().split('T')[0] : '',
       rdcId: code.rdcId || '',
-      codeContrat: code.codeContrat || false,
-      actif: code.actif
+      actif: code.actif,
+      codeContrat: code.codeContrat || false
     })
     setShowCodeForm(true)
     // Scroll to form
@@ -159,11 +168,16 @@ export default function TabGestionAdministrative({ user }: TabGestionAdministrat
     setShowCodeForm(false)
     setFormData({
       code: '',
+      libelle: '',
       description: '',
-      clientId: '',
+      client: '',
+      activite: '',
+      budget: '',
+      dateDebut: '',
+      dateFin: '',
       rdcId: '',
-      codeContrat: false,
-      actif: true
+      actif: true,
+      codeContrat: false
     })
   }
 
@@ -179,11 +193,14 @@ export default function TabGestionAdministrative({ user }: TabGestionAdministrat
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...formData,
-          clientId: formData.clientId || null,
+          code: formData.code,
+          libelle: formData.libelle,
+          description: formData.description,
+          client: formData.client,
+          activite: formData.activite || null,
           rdcId: formData.rdcId || null,
-          codeContrat: formData.codeContrat,
-          actif: formData.actif
+          actif: formData.actif,
+          codeContrat: formData.codeContrat
         })
       })
 
@@ -276,15 +293,15 @@ export default function TabGestionAdministrative({ user }: TabGestionAdministrat
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Description *
+                  Libellé *
                 </label>
                 <input
                   type="text"
                   required
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  value={formData.libelle}
+                  onChange={(e) => setFormData({ ...formData, libelle: e.target.value })}
                   className="input"
-                  placeholder="Description du code affaire"
+                  placeholder="Nom du code affaire"
                 />
               </div>
 
@@ -292,17 +309,32 @@ export default function TabGestionAdministrative({ user }: TabGestionAdministrat
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Client
                 </label>
+                <input
+                  type="text"
+                  value={formData.client}
+                  onChange={(e) => setFormData({ ...formData, client: e.target.value })}
+                  className="input"
+                  placeholder="Nom du client"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Activité
+                </label>
                 <select
-                  value={formData.clientId}
-                  onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
+                  value={formData.activite}
+                  onChange={(e) => setFormData({ ...formData, activite: e.target.value })}
                   className="input"
                 >
-                  <option value="">Sélectionner un client</option>
-                  {clients.map((client) => (
-                    <option key={client.id} value={client.id}>
-                      {client.nom}
-                    </option>
-                  ))}
+                  <option value="">Sélectionner une activité</option>
+                  <option value="Échafaudage">Échafaudage</option>
+                  <option value="Calorifuge">Calorifuge</option>
+                  <option value="Désamiantage">Désamiantage</option>
+                  <option value="Travaux sur corde">Travaux sur corde</option>
+                  <option value="Peinture">Peinture</option>
+                  <option value="Métallerie">Métallerie</option>
+                  <option value="Naval">Naval</option>
                 </select>
               </div>
 
@@ -323,6 +355,57 @@ export default function TabGestionAdministrative({ user }: TabGestionAdministrat
                   ))}
                 </select>
               </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Budget (€)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={formData.budget}
+                  onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
+                  className="input"
+                  placeholder="0.00"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Date de début
+                </label>
+                <input
+                  type="date"
+                  value={formData.dateDebut}
+                  onChange={(e) => setFormData({ ...formData, dateDebut: e.target.value })}
+                  className="input"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Date de fin
+                </label>
+                <input
+                  type="date"
+                  value={formData.dateFin}
+                  onChange={(e) => setFormData({ ...formData, dateFin: e.target.value })}
+                  className="input"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Description
+              </label>
+              <textarea
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                className="input"
+                rows={3}
+                placeholder="Description du code affaire"
+              />
             </div>
 
             {/* Cases à cocher */}
@@ -497,26 +580,25 @@ export default function TabGestionAdministrative({ user }: TabGestionAdministrat
                         </h5>
                         <Edit size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                       </div>
-                      {code.description && (
-                        <p className="text-sm text-gray-600 mb-2">{code.description}</p>
-                      )}
+                      <p className="text-sm text-gray-600 mb-2">{code.libelle || code.description || '-'}</p>
                       {code.client && (
-                        <p className="text-xs text-gray-500 mb-1">Client: {code.client.nom}</p>
+                        <p className="text-xs text-gray-500 mb-1">Client: {code.client}</p>
+                      )}
+                      {code.activite && (
+                        <p className="text-xs text-gray-500 mb-1">Activité: {formatActivite(code.activite)}</p>
                       )}
                       {code.rdc && (
                         <p className="text-xs text-gray-500 mb-1">
                           RDC: {code.rdc.prenom} {code.rdc.nom}
                         </p>
                       )}
-                    </div>
-                    <div className="flex gap-2">
-                      {code.codeContrat && (
-                        <span className="badge badge-info text-xs pointer-events-none">Code contrat</span>
-                      )}
-                      {code.actif && (
-                        <span className="badge badge-success text-xs pointer-events-none">Actif</span>
+                      {code.description && (
+                        <p className="text-xs text-gray-500 mt-2">{code.description}</p>
                       )}
                     </div>
+                    {code.actif && (
+                      <span className="badge badge-success text-xs pointer-events-none">Actif</span>
+                    )}
                   </div>
                 </div>
               ))}

@@ -1,91 +1,86 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { requireSpace } from '@/lib/middleware'
+import { getCurrentUser } from '@/lib/auth'
 
-// Mapping des noms de modèles vers les méthodes Prisma
-const MODEL_MAP: Record<string, keyof typeof prisma> = {
-  'user': 'user',
-  'salarie': 'salarie',
-  'client': 'client',
-  'chantier': 'chantier',
-  'intervention': 'intervention',
-  'codeAffaire': 'codeAffaire',
-  'donneurOrdre': 'donneurOrdre',
-  'perimetre': 'perimetre',
-  'usine': 'usine',
-  'vehicule': 'vehicule',
-  'materiel': 'materiel',
-  'actualite': 'actualite',
-  'messageSecurite': 'messageSecurite',
-  'conversation': 'conversation',
-  'message': 'message',
-  'conge': 'conge',
-  'competence': 'competence',
-  'habilitation': 'habilitation',
-  'autorisation': 'autorisation',
-  'visiteMedicale': 'visiteMedicale',
-  'restrictionMedicale': 'restrictionMedicale',
-  'contactUrgence': 'contactUrgence',
-  'materielFourni': 'materielFourni',
-  'enginConfie': 'enginConfie',
-  'materielAttribue': 'materielAttribue',
-  'documentPersonnel': 'documentPersonnel',
-  'formationSalarie': 'formationSalarie',
-  'accesSiteClient': 'accesSiteClient',
-  'pointage': 'pointage',
-  'horaire': 'horaire',
-  'evaluation': 'evaluation',
-  'evenementRH': 'evenementRH',
-  'affectationPlanning': 'affectationPlanning',
-  'affectationIntervention': 'affectationIntervention',
-  'affectationVehicule': 'affectationVehicule',
-  'affectationPersonnel': 'affectationPersonnel',
-  'structureOrganisationnelle': 'structureOrganisationnelle',
-  'salariePerimetre': 'salariePerimetre',
-  'materielUtilise': 'materielUtilise',
-  'documentIntervention': 'documentIntervention',
-  'ressourceIntervention': 'ressourceIntervention',
-  'photoIntervention': 'photoIntervention',
-  'autoControle': 'autoControle',
-  'messageIntervention': 'messageIntervention',
-  'checklistSecurite': 'checklistSecurite',
-  'participantConversation': 'participantConversation',
-  'publication': 'publication',
+interface RouteParams {
+  params: Promise<{
+    model: string
+    id: string
+  }>
 }
 
+// GET - Récupérer un enregistrement spécifique
 export async function GET(
   request: NextRequest,
-  { params }: { params: { model: string; id: string } }
+  { params }: RouteParams
 ) {
   try {
-    await requireSpace('CONFIGURATION')
+    const user = await getCurrentUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
+    }
 
-    const modelName = params.model
-    const id = params.id
-    const prismaModel = MODEL_MAP[modelName]
-
-    if (!prismaModel || !prisma[prismaModel]) {
+    if (!['CAFF', 'ADMIN'].includes(user.role)) {
       return NextResponse.json(
-        { error: `Modèle ${modelName} non trouvé` },
+        { error: 'Accès non autorisé' },
+        { status: 403 }
+      )
+    }
+
+    const { model, id } = await params
+    
+    // Mapping des noms d'URL vers les noms de modèles Prisma
+    const modelMapping: Record<string, string> = {
+      'user': 'User', 'salarie': 'Salarie', 'competence': 'Competence',
+      'habilitation': 'Habilitation', 'autorisation': 'Autorisation',
+      'visitemedicale': 'VisiteMedicale', 'restrictionmedicale': 'RestrictionMedicale',
+      'publication': 'Publication', 'actualite': 'Actualite',
+      'messagesecurite': 'MessageSecurite', 'conversation': 'Conversation',
+      'participantconversation': 'ParticipantConversation', 'message': 'Message',
+      'conge': 'Conge', 'contacturgence': 'ContactUrgence',
+      'materielfourni': 'MaterielFourni', 'enginconfie': 'EnginConfie',
+      'materielattribue': 'MaterielAttribue', 'documentpersonnel': 'DocumentPersonnel',
+      'formationsalarie': 'FormationSalarie', 'accesiteclient': 'AccesSiteClient',
+      'client': 'Client', 'intervention': 'Intervention', 'materiel': 'Materiel',
+      'materielutilise': 'MaterielUtilise', 'documentintervention': 'DocumentIntervention',
+      'affectationintervention': 'AffectationIntervention', 'ressourceintervention': 'RessourceIntervention',
+      'photointervention': 'PhotoIntervention', 'autocontrole': 'AutoControle',
+      'messageintervention': 'MessageIntervention', 'checklistsecurite': 'ChecklistSecurite',
+      'affectationplanning': 'AffectationPlanning', 'perimetre': 'Perimetre',
+      'salarieperimetre': 'SalariePerimetre', 'chantier': 'Chantier',
+      'donneurordre': 'DonneurOrdre', 'codeaffaire': 'CodeAffaire',
+      'vehicule': 'Vehicule', 'affectationvehicule': 'AffectationVehicule',
+      'pointage': 'Pointage', 'horaire': 'Horaire', 'evaluation': 'Evaluation',
+      'evenementrh': 'EvenementRH', 'affectationpersonnel': 'AffectationPersonnel',
+      'usine': 'Usine', 'structureorganisationnelle': 'StructureOrganisationnelle'
+    }
+
+    const modelNameLower = model.toLowerCase()
+    const modelName = modelMapping[modelNameLower]
+
+    if (!modelName) {
+      return NextResponse.json(
+        { error: `Modèle ${model} non trouvé` },
         { status: 404 }
       )
     }
 
-    const model = prisma[prismaModel] as any
-    const record = await model.findUnique({
-      where: { id },
+    const prismaModelName = modelName.charAt(0).toLowerCase() + modelName.slice(1)
+
+    const data = await (prisma as any)[prismaModelName].findUnique({
+      where: { id }
     })
 
-    if (!record) {
+    if (!data) {
       return NextResponse.json(
         { error: 'Enregistrement non trouvé' },
         { status: 404 }
       )
     }
 
-    return NextResponse.json(record)
+    return NextResponse.json(data)
   } catch (error: any) {
-    console.error('Erreur GET database:', error)
+    console.error('Error fetching database record:', error)
     return NextResponse.json(
       { error: error.message || 'Erreur lors de la récupération' },
       { status: 500 }
@@ -93,50 +88,85 @@ export async function GET(
   }
 }
 
+// PUT - Mettre à jour un enregistrement
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { model: string; id: string } }
+  { params }: RouteParams
 ) {
   try {
-    await requireSpace('CONFIGURATION')
+    const user = await getCurrentUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
+    }
 
-    const modelName = params.model
-    const id = params.id
-    const prismaModel = MODEL_MAP[modelName]
-
-    if (!prismaModel || !prisma[prismaModel]) {
+    if (!['CAFF', 'ADMIN'].includes(user.role)) {
       return NextResponse.json(
-        { error: `Modèle ${modelName} non trouvé` },
+        { error: 'Accès non autorisé' },
+        { status: 403 }
+      )
+    }
+
+    const { model, id } = await params
+    
+    const modelMapping: Record<string, string> = {
+      'user': 'User', 'salarie': 'Salarie', 'competence': 'Competence',
+      'habilitation': 'Habilitation', 'autorisation': 'Autorisation',
+      'visitemedicale': 'VisiteMedicale', 'restrictionmedicale': 'RestrictionMedicale',
+      'publication': 'Publication', 'actualite': 'Actualite',
+      'messagesecurite': 'MessageSecurite', 'conversation': 'Conversation',
+      'participantconversation': 'ParticipantConversation', 'message': 'Message',
+      'conge': 'Conge', 'contacturgence': 'ContactUrgence',
+      'materielfourni': 'MaterielFourni', 'enginconfie': 'EnginConfie',
+      'materielattribue': 'MaterielAttribue', 'documentpersonnel': 'DocumentPersonnel',
+      'formationsalarie': 'FormationSalarie', 'accesiteclient': 'AccesSiteClient',
+      'client': 'Client', 'intervention': 'Intervention', 'materiel': 'Materiel',
+      'materielutilise': 'MaterielUtilise', 'documentintervention': 'DocumentIntervention',
+      'affectationintervention': 'AffectationIntervention', 'ressourceintervention': 'RessourceIntervention',
+      'photointervention': 'PhotoIntervention', 'autocontrole': 'AutoControle',
+      'messageintervention': 'MessageIntervention', 'checklistsecurite': 'ChecklistSecurite',
+      'affectationplanning': 'AffectationPlanning', 'perimetre': 'Perimetre',
+      'salarieperimetre': 'SalariePerimetre', 'chantier': 'Chantier',
+      'donneurordre': 'DonneurOrdre', 'codeaffaire': 'CodeAffaire',
+      'vehicule': 'Vehicule', 'affectationvehicule': 'AffectationVehicule',
+      'pointage': 'Pointage', 'horaire': 'Horaire', 'evaluation': 'Evaluation',
+      'evenementrh': 'EvenementRH', 'affectationpersonnel': 'AffectationPersonnel',
+      'usine': 'Usine', 'structureorganisationnelle': 'StructureOrganisationnelle'
+    }
+
+    const modelNameLower = model.toLowerCase()
+    const modelName = modelMapping[modelNameLower]
+
+    if (!modelName) {
+      return NextResponse.json(
+        { error: `Modèle ${model} non trouvé` },
         { status: 404 }
       )
     }
 
+    const prismaModelName = modelName.charAt(0).toLowerCase() + modelName.slice(1)
     const body = await request.json()
-    const model = prisma[prismaModel] as any
 
-    // Nettoyer les champs et convertir les types
-    const cleanedData: any = {}
-    for (const [key, value] of Object.entries(body)) {
-      if (key !== 'id') {
-        // Convertir les dates si nécessaire
-        if (key.includes('date') || key.includes('Date') || key === 'createdAt' || key === 'updatedAt') {
-          if (value) {
-            cleanedData[key] = new Date(value as string)
-          }
-        } else {
-          cleanedData[key] = value
-        }
+    // Nettoyer les données
+    const cleanData: any = { ...body }
+    delete cleanData.id
+    delete cleanData.createdAt
+    delete cleanData.updatedAt
+
+    // Convertir les chaînes vides en null
+    Object.keys(cleanData).forEach((key) => {
+      if (cleanData[key] === '') {
+        cleanData[key] = null
       }
-    }
-
-    const updatedRecord = await model.update({
-      where: { id },
-      data: cleanedData,
     })
 
-    return NextResponse.json(updatedRecord)
+    const updated = await (prisma as any)[prismaModelName].update({
+      where: { id },
+      data: cleanData
+    })
+
+    return NextResponse.json(updated)
   } catch (error: any) {
-    console.error('Erreur PUT database:', error)
+    console.error('Error updating database record:', error)
     return NextResponse.json(
       { error: error.message || 'Erreur lors de la mise à jour' },
       { status: 500 }
@@ -144,32 +174,79 @@ export async function PUT(
   }
 }
 
+// DELETE - Supprimer un enregistrement
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { model: string; id: string } }
+  { params }: RouteParams
 ) {
   try {
-    await requireSpace('CONFIGURATION')
+    const user = await getCurrentUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
+    }
 
-    const modelName = params.model
-    const id = params.id
-    const prismaModel = MODEL_MAP[modelName]
-
-    if (!prismaModel || !prisma[prismaModel]) {
+    if (!['CAFF', 'ADMIN'].includes(user.role)) {
       return NextResponse.json(
-        { error: `Modèle ${modelName} non trouvé` },
+        { error: 'Accès non autorisé' },
+        { status: 403 }
+      )
+    }
+
+    const { model, id } = await params
+    
+    const modelMapping: Record<string, string> = {
+      'user': 'User', 'salarie': 'Salarie', 'competence': 'Competence',
+      'habilitation': 'Habilitation', 'autorisation': 'Autorisation',
+      'visitemedicale': 'VisiteMedicale', 'restrictionmedicale': 'RestrictionMedicale',
+      'publication': 'Publication', 'actualite': 'Actualite',
+      'messagesecurite': 'MessageSecurite', 'conversation': 'Conversation',
+      'participantconversation': 'ParticipantConversation', 'message': 'Message',
+      'conge': 'Conge', 'contacturgence': 'ContactUrgence',
+      'materielfourni': 'MaterielFourni', 'enginconfie': 'EnginConfie',
+      'materielattribue': 'MaterielAttribue', 'documentpersonnel': 'DocumentPersonnel',
+      'formationsalarie': 'FormationSalarie', 'accesiteclient': 'AccesSiteClient',
+      'client': 'Client', 'intervention': 'Intervention', 'materiel': 'Materiel',
+      'materielutilise': 'MaterielUtilise', 'documentintervention': 'DocumentIntervention',
+      'affectationintervention': 'AffectationIntervention', 'ressourceintervention': 'RessourceIntervention',
+      'photointervention': 'PhotoIntervention', 'autocontrole': 'AutoControle',
+      'messageintervention': 'MessageIntervention', 'checklistsecurite': 'ChecklistSecurite',
+      'affectationplanning': 'AffectationPlanning', 'perimetre': 'Perimetre',
+      'salarieperimetre': 'SalariePerimetre', 'chantier': 'Chantier',
+      'donneurordre': 'DonneurOrdre', 'codeaffaire': 'CodeAffaire',
+      'vehicule': 'Vehicule', 'affectationvehicule': 'AffectationVehicule',
+      'pointage': 'Pointage', 'horaire': 'Horaire', 'evaluation': 'Evaluation',
+      'evenementrh': 'EvenementRH', 'affectationpersonnel': 'AffectationPersonnel',
+      'usine': 'Usine', 'structureorganisationnelle': 'StructureOrganisationnelle'
+    }
+
+    const modelNameLower = model.toLowerCase()
+    const modelName = modelMapping[modelNameLower]
+
+    if (!modelName) {
+      return NextResponse.json(
+        { error: `Modèle ${model} non trouvé` },
         { status: 404 }
       )
     }
 
-    const model = prisma[prismaModel] as any
-    await model.delete({
-      where: { id },
+    const prismaModelName = modelName.charAt(0).toLowerCase() + modelName.slice(1)
+
+    await (prisma as any)[prismaModelName].delete({
+      where: { id }
     })
 
     return NextResponse.json({ success: true })
   } catch (error: any) {
-    console.error('Erreur DELETE database:', error)
+    console.error('Error deleting database record:', error)
+    
+    // Gérer les erreurs de contrainte de clé étrangère
+    if (error.code === 'P2003') {
+      return NextResponse.json(
+        { error: 'Impossible de supprimer : cet enregistrement est référencé ailleurs' },
+        { status: 400 }
+      )
+    }
+
     return NextResponse.json(
       { error: error.message || 'Erreur lors de la suppression' },
       { status: 500 }

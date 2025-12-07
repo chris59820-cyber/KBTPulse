@@ -74,16 +74,10 @@ export default function ClientsDonneursOrdreContent({
 
   const fetchDonneursOrdre = async () => {
     try {
-      // Récupérer tous les donneurs d'ordre (actifs et inactifs)
       const response = await fetch('/api/donneurs-ordre')
       if (response.ok) {
         const data = await response.json()
         setDonneursOrdre(data)
-        console.log('Donneurs d\'ordre récupérés:', data.length)
-      } else {
-        console.error('Error response:', response.status, response.statusText)
-        const errorData = await response.json().catch(() => ({}))
-        console.error('Error data:', errorData)
       }
     } catch (error) {
       console.error('Error fetching donneurs ordre:', error)

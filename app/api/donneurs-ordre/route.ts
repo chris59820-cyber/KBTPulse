@@ -13,11 +13,11 @@ export async function GET(request: NextRequest) {
     if (clientId) {
       where.clientId = clientId
     }
-    // Si actif est spécifié, on filtre selon la valeur
-    if (actif !== null && actif !== '') {
+    if (actif !== null) {
       where.actif = actif === 'true'
+    } else {
+      where.actif = true // Par défaut, seulement les actifs
     }
-    // Si actif n'est pas spécifié ou est vide, on affiche tous (actifs et inactifs)
 
     const donneursOrdre = await prisma.donneurOrdre.findMany({
       where,

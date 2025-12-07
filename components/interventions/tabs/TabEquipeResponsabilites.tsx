@@ -7,6 +7,8 @@ import ModalGestionAffectations from './ModalGestionAffectations'
 
 interface Intervention {
   id: string
+  dateDebut: Date | string | null
+  dateFin: Date | string | null
   responsable: {
     id: string
     nom: string
@@ -57,8 +59,10 @@ export default function TabEquipeResponsabilites({ intervention, user }: TabEqui
   const [refreshKey, setRefreshKey] = useState(0)
   
   const canManageAffectations = ['PREPA', 'CE', 'RDC', 'CAFF', 'ADMIN'].includes(user.role)
-  const chefsEquipe = intervention.affectationsIntervention.filter(a => a.role === 'chef_equipe')
-  const ouvriers = intervention.affectationsIntervention.filter(a => a.role === 'ouvrier')
+  // Filtrer uniquement les affectations actives
+  const affectationsActives = intervention.affectationsIntervention.filter(a => a.actif !== false)
+  const chefsEquipe = affectationsActives.filter(a => a.role === 'chef_equipe')
+  const ouvriers = affectationsActives.filter(a => a.role === 'ouvrier')
 
   const handleRefresh = () => {
     setRefreshKey(prev => prev + 1)
@@ -73,34 +77,6 @@ export default function TabEquipeResponsabilites({ intervention, user }: TabEqui
           <h3 className="text-lg font-semibold text-gray-900">Responsables de l'intervention</h3>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {intervention.responsable && (
-            <div className="card">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 bg-primary-100 rounded-lg">
-                  <User className="text-primary-600" size={20} />
-                </div>
-                <div>
-                  <h5 className="font-semibold text-gray-900">
-                    {intervention.responsable.prenom} {intervention.responsable.nom}
-                  </h5>
-                  <p className="text-sm text-gray-500">Responsable</p>
-                </div>
-              </div>
-              {intervention.responsable.email && (
-                <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
-                  <Mail size={14} />
-                  <span>{intervention.responsable.email}</span>
-                </div>
-              )}
-              {intervention.responsable.telephone && (
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <Phone size={14} />
-                  <span>{intervention.responsable.telephone}</span>
-                </div>
-              )}
-            </div>
-          )}
-
           {intervention.rdc && (
             <div className="card">
               <div className="flex items-center gap-3 mb-3">
@@ -132,27 +108,29 @@ export default function TabEquipeResponsabilites({ intervention, user }: TabEqui
             </div>
           )}
 
-          {intervention.donneurOrdreNom && (
+          {intervention.responsable && (
             <div className="card">
               <div className="flex items-center gap-3 mb-3">
                 <div className="p-2 bg-primary-100 rounded-lg">
                   <User className="text-primary-600" size={20} />
                 </div>
                 <div>
-                  <h5 className="font-semibold text-gray-900">{intervention.donneurOrdreNom}</h5>
-                  <p className="text-sm text-gray-500">Donneur d'ordre</p>
+                  <h5 className="font-semibold text-gray-900">
+                    {intervention.responsable.prenom} {intervention.responsable.nom}
+                  </h5>
+                  <p className="text-sm text-gray-500">Responsable</p>
                 </div>
               </div>
-              {intervention.donneurOrdreEmail && (
+              {intervention.responsable.email && (
                 <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
                   <Mail size={14} />
-                  <span>{intervention.donneurOrdreEmail}</span>
+                  <span>{intervention.responsable.email}</span>
                 </div>
               )}
-              {intervention.donneurOrdreTelephone && (
+              {intervention.responsable.telephone && (
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <Phone size={14} />
-                  <span>{intervention.donneurOrdreTelephone}</span>
+                  <span>{intervention.responsable.telephone}</span>
                 </div>
               )}
             </div>
@@ -200,7 +178,7 @@ export default function TabEquipeResponsabilites({ intervention, user }: TabEqui
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <h5 className="font-semibold text-gray-900">
-                          {affectation.salarie.prenom} {affectation.salarie.nom}
+                          {affectation.salarie?.prenom || ''} {affectation.salarie?.nom || 'Salarié sans nom'}
                         </h5>
                         <BadgeCheck className="text-primary-600" size={16} />
                       </div>
@@ -245,7 +223,7 @@ export default function TabEquipeResponsabilites({ intervention, user }: TabEqui
                     )}
                     <div className="flex-1">
                       <h5 className="font-semibold text-gray-900 mb-1">
-                        {affectation.salarie.prenom} {affectation.salarie.nom}
+                        {affectation.salarie?.prenom || ''} {affectation.salarie?.nom || 'Salarié sans nom'}
                       </h5>
                       <span className="badge badge-secondary text-xs mb-2">
                         {rolesLabels[affectation.role] || affectation.role}
@@ -264,7 +242,7 @@ export default function TabEquipeResponsabilites({ intervention, user }: TabEqui
           </div>
         )}
 
-        {intervention.affectationsIntervention.length === 0 && (
+        {affectationsActives.length === 0 && (
           <div className="text-center py-8">
             <p className="text-gray-500 mb-4">Aucune personne affectée</p>
             {canManageAffectations && (
@@ -285,6 +263,8 @@ export default function TabEquipeResponsabilites({ intervention, user }: TabEqui
         <ModalGestionAffectations
           interventionId={intervention.id}
           affectations={intervention.affectationsIntervention}
+          dateDebut={intervention.dateDebut}
+          dateFin={intervention.dateFin}
           onClose={() => setShowModal(false)}
           onSave={handleRefresh}
         />

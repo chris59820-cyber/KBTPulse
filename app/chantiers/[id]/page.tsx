@@ -2,11 +2,12 @@ import SidebarWrapper from '@/components/SidebarWrapper'
 import Header from '@/components/Header'
 import { requireAuth } from '@/lib/middleware'
 import { prisma } from '@/lib/prisma'
-import { formatDate, formatDateTime } from '@/lib/utils'
+import { formatDate } from '@/lib/utils'
 import { Building2, MapPin, Calendar, Wrench, Plus, ArrowLeft, Edit } from 'lucide-react'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import BoutonSupprimerChantier from '@/components/chantiers/BoutonSupprimerChantier'
+import InterventionsListChantier from '@/components/chantiers/InterventionsListChantier'
 
 interface PageProps {
   params: Promise<{
@@ -65,7 +66,10 @@ export default async function ChantierDetailPage(props: PageProps) {
             }
           }
         },
-        orderBy: { createdAt: 'desc' }
+        orderBy: [
+          { ordre: 'asc' },
+          { createdAt: 'desc' }
+        ]
       },
       _count: {
         select: {
@@ -284,88 +288,12 @@ export default async function ChantierDetailPage(props: PageProps) {
                   )}
                 </div>
               ) : (
-                <div className="space-y-4">
-                  {chantier.interventions.map((intervention) => (
-                    <Link
-                      key={intervention.id}
-                      href={`/interventions/${intervention.id}`}
-                      className="block p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
-                    >
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-gray-900 mb-1">{intervention.titre}</h3>
-                          {intervention.description && (
-                            <p className="text-sm text-gray-600 line-clamp-2">{intervention.description}</p>
-                          )}
-                        </div>
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${statutColors[intervention.statut] || 'bg-gray-100 text-gray-800'}`}>
-                          {statutLabels[intervention.statut] || intervention.statut}
-                        </span>
-                      </div>
-
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 text-sm">
-                        <div>
-                          <p className="text-gray-500 mb-1">Date de début</p>
-                          {intervention.dateDebut ? (
-                            <p className="text-gray-900">{formatDateTime(intervention.dateDebut)}</p>
-                          ) : (
-                            <p className="text-gray-400 italic">Non planifiée</p>
-                          )}
-                        </div>
-                        {intervention.dateFin && (
-                          <div>
-                            <p className="text-gray-500 mb-1">Date de fin</p>
-                            <p className="text-gray-900">{formatDateTime(intervention.dateFin)}</p>
-                          </div>
-                        )}
-                        {intervention.responsable && (
-                          <div>
-                            <p className="text-gray-500 mb-1">Responsable</p>
-                            <p className="text-gray-900">
-                              {intervention.responsable.prenom} {intervention.responsable.nom}
-                            </p>
-                          </div>
-                        )}
-                        {intervention.rdc && (
-                          <div>
-                            <p className="text-gray-500 mb-1">RDC</p>
-                            <p className="text-gray-900">
-                              {intervention.rdc.prenom} {intervention.rdc.nom}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-
-                      {intervention.affectationsIntervention && intervention.affectationsIntervention.length > 0 && (
-                        <div className="mt-4 pt-4 border-t border-gray-200">
-                          <p className="text-sm text-gray-500 mb-2">Équipe ({intervention.affectationsIntervention.length} personne{intervention.affectationsIntervention.length > 1 ? 's' : ''})</p>
-                          <div className="flex flex-wrap gap-2">
-                            {intervention.affectationsIntervention.map((affectation) => (
-                              <span key={affectation.id} className="text-sm text-gray-700">
-                                {affectation.salarie.prenom} {affectation.salarie.nom}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {intervention.avancement !== null && (
-                        <div className="mt-4">
-                          <div className="flex items-center justify-between text-sm mb-1">
-                            <span className="text-gray-600">Avancement</span>
-                            <span className="text-gray-900 font-medium">{intervention.avancement}%</span>
-                          </div>
-                          <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div
-                              className="bg-primary-600 h-2 rounded-full transition-all"
-                              style={{ width: `${intervention.avancement}%` }}
-                            />
-                          </div>
-                        </div>
-                      )}
-                    </Link>
-                  ))}
-                </div>
+                <InterventionsListChantier
+                  interventions={chantier.interventions}
+                  canReorder={user?.role !== 'OUVRIER'}
+                  statutColors={statutColors}
+                  statutLabels={statutLabels}
+                />
               )}
             </div>
           </div>

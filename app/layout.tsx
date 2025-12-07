@@ -15,7 +15,10 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="fr">
+    <html lang="fr-FR">
+      <head>
+        <meta name="locale" content="fr-FR" />
+      </head>
       <body className={inter.className}>
         <div className="min-h-screen bg-gray-50">
           {children}

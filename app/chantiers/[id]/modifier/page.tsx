@@ -102,6 +102,7 @@ export default async function ModifierChantierPage({ params }: PageProps) {
                 site: chantier.site,
                 secteur: chantier.secteur,
                 numeroCommande: chantier.numeroCommande,
+                donneurOrdreId: chantier.donneurOrdreId,
                 donneurOrdreNom: chantier.donneurOrdreNom,
                 donneurOrdreTelephone: chantier.donneurOrdreTelephone,
                 donneurOrdreEmail: chantier.donneurOrdreEmail,

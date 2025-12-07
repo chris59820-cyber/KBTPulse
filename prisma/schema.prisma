@@ -511,6 +511,7 @@ model Intervention {
   donneurOrdreTelephone String?   @map("donneur_ordre_telephone_old")
   donneurOrdreEmail     String?   @map("donneur_ordre_email_old")
   salarieId             String?
+  ordre                 Int?      @default(0)
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
@@ -805,18 +806,18 @@ model Chantier {
 // -------------------------------
 
 model DonneurOrdre {
-  id        String   @id @default(cuid())
-  nom       String
-  prenom    String?
-  fonction  String?
-  entreprise String?
-  telephone String?
-  email     String?
-  clientId  String?
+  id          String   @id @default(cuid())
+  nom         String
+  prenom      String?
+  fonction    String?
+  entreprise  String?
   commentaire String?
-  actif     Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  telephone   String?
+  email       String?
+  clientId    String?
+  actif       Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   client        Client?        @relation("ClientDonneursOrdre", fields: [clientId], references: [id], onDelete: SetNull)
   chantiers     Chantier[]
@@ -836,6 +837,7 @@ model CodeAffaire {
   clientId    String?
   rdcId       String?
   codeContrat Boolean  @default(false)
+  activite    String?
   actif       Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

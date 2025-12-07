@@ -77,8 +77,7 @@ interface Usine {
 interface CodeAffaire {
   id: string
   code: string
-  libelle: string
-  chantierId: string | null
+  description: string | null
   actif: boolean
 }
 
@@ -103,8 +102,7 @@ interface DocumentUpload {
 interface Affectation {
   salarieId: string
   role: 'chef_equipe' | 'ouvrier'
-  dateDebut: string
-  dateFin?: string
+  // Les dates seront automatiquement utilisées depuis l'intervention
 }
 
 interface RessourceMaterielle {
@@ -573,25 +571,76 @@ export default function FormNouvelleIntervention({
   
   // Filtrer les codes affaire : afficher ceux liés au chantier ou ceux sans chantier spécifique
   const codesAffaireFiltres = codesAffaire.filter(ca => {
-    if (!ca.actif) return false
-    // Si un chantier est sélectionné, afficher ceux liés à ce chantier ou ceux sans chantier
-    if (chantierId) {
-      return !ca.chantierId || ca.chantierId === chantierId
-    }
-    // Sinon, afficher tous les codes affaire actifs
-    return true
+    // Afficher tous les codes affaire actifs
+    return ca.actif
   })
-  const [affectations, setAffectations] = useState<Affectation[]>(
-    intervention?.affectationsIntervention?.map(aff => ({
-      salarieId: aff.salarieId,
-      role: aff.role as 'chef_equipe' | 'ouvrier',
-      dateDebut: aff.dateDebut ? new Date(aff.dateDebut).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-      dateFin: aff.dateFin ? new Date(aff.dateFin).toISOString().split('T')[0] : undefined
-    })) || []
-  )
+  const [affectations, setAffectations] = useState<Affectation[]>(() => {
+    if (!intervention?.affectationsIntervention) return []
+    
+    return intervention.affectationsIntervention
+      .filter(aff => aff.actif !== false) // Filtrer les affectations actives
+      .map(aff => {
+        // S'assurer que salarieId est présent
+        const salarieId = aff.salarieId || (aff.salarie?.id)
+        if (!salarieId) {
+          console.warn('Affectation sans salarieId:', aff)
+          return null
+        }
+        
+        return {
+          salarieId: salarieId,
+          role: (aff.role || 'ouvrier') as 'chef_equipe' | 'ouvrier'
+          // Les dates seront automatiquement utilisées depuis l'intervention
+        }
+      })
+      .filter((aff): aff is Affectation => aff !== null)
+  })
+  const [donneurOrdreId, setDonneurOrdreId] = useState<string>((intervention as any)?.donneurOrdreId || '')
+  const [donneursOrdre, setDonneursOrdre] = useState<Array<{
+    id: string
+    nom: string
+    prenom: string | null
+    telephone: string | null
+    email: string | null
+  }>>([])
   const [donneurOrdreNom, setDonneurOrdreNom] = useState(intervention?.donneurOrdreNom || '')
   const [donneurOrdreTelephone, setDonneurOrdreTelephone] = useState(intervention?.donneurOrdreTelephone || '')
   const [donneurOrdreEmail, setDonneurOrdreEmail] = useState(intervention?.donneurOrdreEmail || '')
+
+  // Charger la liste des donneurs d'ordre
+  useEffect(() => {
+    fetch('/api/donneurs-ordre')
+      .then(res => res.json())
+      .then(data => {
+        const donneursActifs = data.filter((donneurOrdre: any) => donneurOrdre.actif !== false)
+        setDonneursOrdre(donneursActifs)
+        
+        // Si on est en mode édition et qu'il y a un donneurOrdreId, le pré-sélectionner
+        if (intervention && (intervention as any).donneurOrdreId) {
+          setDonneurOrdreId((intervention as any).donneurOrdreId)
+        }
+      })
+      .catch(err => {
+        console.error('Erreur lors du chargement des donneurs d\'ordre:', err)
+      })
+  }, [intervention])
+
+  // Quand un donneur d'ordre est sélectionné, pré-remplir les champs
+  useEffect(() => {
+    if (donneurOrdreId) {
+      const donneurOrdre = donneursOrdre.find((doItem: any) => doItem.id === donneurOrdreId)
+      if (donneurOrdre) {
+        setDonneurOrdreNom(donneurOrdre.nom + (donneurOrdre.prenom ? ` ${donneurOrdre.prenom}` : ''))
+        setDonneurOrdreTelephone(donneurOrdre.telephone || '')
+        setDonneurOrdreEmail(donneurOrdre.email || '')
+      }
+    } else {
+      // Si aucun donneur d'ordre n'est sélectionné, vider les champs
+      setDonneurOrdreNom('')
+      setDonneurOrdreTelephone('')
+      setDonneurOrdreEmail('')
+    }
+  }, [donneurOrdreId, donneursOrdre])
 
   // 6.4 Ressources matérielles
   const [ressources, setRessources] = useState<RessourceMaterielle[]>(
@@ -838,8 +887,8 @@ export default function FormNouvelleIntervention({
   const handleAddAffectation = () => {
     setAffectations([...affectations, {
       salarieId: '',
-      role: 'ouvrier',
-      dateDebut: new Date().toISOString().split('T')[0]
+      role: 'ouvrier'
+      // Les dates seront automatiquement utilisées depuis l'intervention
     }])
   }
 
@@ -1119,6 +1168,7 @@ export default function FormNouvelleIntervention({
       formData.append('responsableId', responsableId || '')
       formData.append('rdcId', rdcId || '')
       formData.append('codeAffaireId', codeAffaireId || '')
+      formData.append('donneurOrdreId', donneurOrdreId || '')
       formData.append('donneurOrdreNom', donneurOrdreNom || '')
       formData.append('donneurOrdreTelephone', donneurOrdreTelephone || '')
       formData.append('donneurOrdreEmail', donneurOrdreEmail || '')
@@ -1406,7 +1456,7 @@ export default function FormNouvelleIntervention({
                 <option value="">Sélectionner un code affaire</option>
                 {codesAffaireFiltres.map((codeAffaire) => (
                   <option key={codeAffaire.id} value={codeAffaire.id}>
-                    {codeAffaire.code} - {codeAffaire.libelle}
+                    {codeAffaire.code} - {codeAffaire.description || 'Sans description'}
                   </option>
                 ))}
               </select>
@@ -1681,17 +1731,6 @@ export default function FormNouvelleIntervention({
                         <option value="chef_equipe">Chef d'équipe</option>
                       </select>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Date de début
-                      </label>
-                      <input
-                        type="date"
-                        value={aff.dateDebut}
-                        onChange={(e) => handleAffectationChange(index, 'dateDebut', e.target.value)}
-                        className="input"
-                      />
-                    </div>
                     <div className="flex items-end">
                       <button
                         type="button"
@@ -1715,40 +1754,64 @@ export default function FormNouvelleIntervention({
 
           <div className="border-t pt-6">
             <h4 className="text-md font-medium text-gray-900 mb-4">Contact du donneur d'ordre</h4>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nom
+                  Donneur d'ordre
                 </label>
-                <input
-                  type="text"
-                  value={donneurOrdreNom}
-                  onChange={(e) => setDonneurOrdreNom(e.target.value)}
-                  className="input"
-                />
+                <select
+                  value={donneurOrdreId}
+                  onChange={(e) => setDonneurOrdreId(e.target.value)}
+                  className="input w-full"
+                >
+                  <option value="">Sélectionner un donneur d'ordre</option>
+                  {donneursOrdre.map((donneurOrdre) => (
+                    <option key={donneurOrdre.id} value={donneurOrdre.id}>
+                      {donneurOrdre.nom} {donneurOrdre.prenom || ''}
+                    </option>
+                  ))}
+                </select>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Téléphone
-                </label>
-                <input
-                  type="tel"
-                  value={donneurOrdreTelephone}
-                  onChange={(e) => setDonneurOrdreTelephone(e.target.value)}
-                  className="input"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  value={donneurOrdreEmail}
-                  onChange={(e) => setDonneurOrdreEmail(e.target.value)}
-                  className="input"
-                />
-              </div>
+              {donneurOrdreId && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-50 p-4 rounded-lg">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Nom
+                    </label>
+                    <input
+                      type="text"
+                      value={donneurOrdreNom}
+                      onChange={(e) => setDonneurOrdreNom(e.target.value)}
+                      className="input"
+                      readOnly
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Téléphone
+                    </label>
+                    <input
+                      type="tel"
+                      value={donneurOrdreTelephone}
+                      onChange={(e) => setDonneurOrdreTelephone(e.target.value)}
+                      className="input"
+                      readOnly
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      value={donneurOrdreEmail}
+                      onChange={(e) => setDonneurOrdreEmail(e.target.value)}
+                      className="input"
+                      readOnly
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -39,7 +39,7 @@ export default async function NouvelleInterventionPage(props: PageProps) {
       orderBy: { nom: 'asc' }
     }),
     prisma.vehicule.findMany({
-      where: { actif: true },
+      where: { statut: 'disponible' },
       orderBy: { immatriculation: 'asc' }
     }),
     prisma.usine.findMany({

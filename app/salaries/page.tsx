@@ -3,8 +3,9 @@ import Header from '@/components/Header'
 import { requireAuth } from '@/lib/middleware'
 import { prisma } from '@/lib/prisma'
 import { formatDate } from '@/lib/utils'
-import { Plus, User, Mail, Phone, Briefcase } from 'lucide-react'
+import { Plus, Mail, Phone, Briefcase, User } from 'lucide-react'
 import Link from 'next/link'
+import PhotoSalarie from '@/components/salaries/PhotoSalarie'
 
 export default async function SalariesPage() {
   const user = await requireAuth()
@@ -68,9 +69,13 @@ export default async function SalariesPage() {
                     <tr key={salarie.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10 bg-primary-100 rounded-full flex items-center justify-center">
-                            <User className="text-primary-600" size={20} />
-                          </div>
+                          <PhotoSalarie
+                            photoUrl={salarie.photoUrl}
+                            prenom={salarie.prenom}
+                            nom={salarie.nom}
+                            size={20}
+                            className="h-10 w-10"
+                          />
                           <div className="ml-4">
                             <div className="text-sm font-medium text-gray-900">
                               {salarie.prenom} {salarie.nom}
