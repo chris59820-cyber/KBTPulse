@@ -57,13 +57,22 @@ export default async function AccueilPage() {
     prisma.messageSecurite.findMany({
       where: { 
         actif: true,
+        dateDebut: { lte: new Date() }, // Le message doit avoir commencé
         OR: [
           { dateFin: null },
-          { dateFin: { gte: new Date() } }
+          { dateFin: { gte: new Date() } } // Le message n'est pas encore expiré
         ]
       },
       orderBy: { createdAt: 'desc' },
-      take: 5
+      take: 5,
+      include: {
+        perimetre: {
+          select: {
+            id: true,
+            nom: true
+          }
+        }
+      }
     }),
 
     prisma.conversation.findMany({

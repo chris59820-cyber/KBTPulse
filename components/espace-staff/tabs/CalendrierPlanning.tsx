@@ -948,73 +948,145 @@ export default function CalendrierPlanning({ user }: CalendrierPlanningProps) {
 
             {/* Contenu */}
             <div className="flex-1 overflow-y-auto p-6">
-              <div className="space-y-1">
-                {generateTimeSlots()
-                  .filter(slot => {
+              <div className="relative" style={{ minHeight: '100%' }}>
+                {(() => {
+                  const visibleSlots = generateTimeSlots().filter(slot => {
                     const slotMinutes = timeToMinutes(slot)
                     const startMinutes = timeToMinutes(timeRangeStart)
                     const endMinutes = timeToMinutes(timeRangeEnd)
                     return slotMinutes >= startMinutes && slotMinutes < endMinutes
                   })
-                  .map((slot, index) => {
-                  const affectationsSlot = getAffectationsForDate(selectedDate).filter(aff => {
-                    if (!aff.heureDebut || !aff.heureFin) return false
-                    const slotMinutes = timeToMinutes(slot)
-                    const startMinutes = timeToMinutes(aff.heureDebut)
-                    const endMinutes = timeToMinutes(aff.heureFin)
-                    // Vérifier si la tranche horaire est dans la plage de l'affectation
-                    return slotMinutes >= startMinutes && slotMinutes < endMinutes
+                  
+                  // Collecter tous les événements uniques
+                  const allEvents: Array<{
+                    id: string
+                    type: 'affectation' | 'intervention'
+                    data: any
+                    startSlotIndex: number
+                    endSlotIndex: number
+                  }> = []
+                  
+                  const processedIds = new Set<string>()
+                  
+                  // Traiter les affectations
+                  getAffectationsForDate(selectedDate).forEach(aff => {
+                    if (!aff.heureDebut || !aff.heureFin || processedIds.has(aff.id)) return
+                    processedIds.add(aff.id)
+                    
+                    const affStartMinutes = timeToMinutes(aff.heureDebut)
+                    const affEndMinutes = timeToMinutes(aff.heureFin)
+                    
+                    // Trouver le premier slot qui correspond au début de l'affectation
+                    // On cherche le slot où le temps du slot est >= au début de l'affectation
+                    const startIndex = visibleSlots.findIndex(slot => {
+                      const slotMinutes = timeToMinutes(slot)
+                      return slotMinutes >= affStartMinutes && slotMinutes < affEndMinutes
+                    })
+                    if (startIndex === -1) return
+                    
+                    // Trouver le premier slot qui est >= à la fin de l'affectation
+                    const endIndex = visibleSlots.findIndex((slot, idx) => {
+                      if (idx < startIndex) return false
+                      const slotMinutes = timeToMinutes(slot)
+                      return slotMinutes >= affEndMinutes
+                    })
+                    const finalEndIndex = endIndex === -1 ? visibleSlots.length : endIndex
+                    
+                    allEvents.push({
+                      id: aff.id,
+                      type: 'affectation',
+                      data: aff,
+                      startSlotIndex: startIndex,
+                      endSlotIndex: finalEndIndex
+                    })
                   })
                   
-                  const interventionsSlot = getInterventionsForDate(selectedDate).filter(interv => {
-                    // Pour les interventions, on vérifie si elles couvrent cette tranche horaire
+                  // Traiter les interventions
+                  getInterventionsForDate(selectedDate).forEach(interv => {
+                    if (processedIds.has(interv.id)) return
+                    processedIds.add(interv.id)
+                    
                     const intervStart = new Date(interv.dateDebut)
                     const intervEnd = interv.dateFin ? new Date(interv.dateFin) : null
+                    if (!intervEnd) return
                     
-                    if (!intervEnd) return false
-                    
-                    // Vérifier si la date sélectionnée est dans la plage de l'intervention
                     const selectedDateStart = new Date(selectedDate)
                     selectedDateStart.setHours(0, 0, 0, 0)
                     const selectedDateEnd = new Date(selectedDate)
                     selectedDateEnd.setHours(23, 59, 59, 999)
                     
-                    if (intervStart > selectedDateEnd || intervEnd < selectedDateStart) {
-                      return false
+                    if (intervStart > selectedDateEnd || intervEnd < selectedDateStart) return
+                    
+                    let startMinutes: number
+                    let endMinutes: number
+                    
+                    if (intervStart.toDateString() === selectedDate.toDateString()) {
+                      startMinutes = timeToMinutes(intervStart.toTimeString().slice(0, 5))
+                    } else if (intervStart < selectedDateStart) {
+                      startMinutes = timeToMinutes(timeRangeStart)
+                    } else {
+                      return
                     }
                     
-                    // Si l'intervention couvre toute la journée, l'afficher pour toutes les tranches
-                    if (intervStart <= selectedDateStart && intervEnd >= selectedDateEnd) {
-                      return true
+                    if (intervEnd.toDateString() === selectedDate.toDateString()) {
+                      endMinutes = timeToMinutes(intervEnd.toTimeString().slice(0, 5))
+                    } else {
+                      endMinutes = timeToMinutes(timeRangeEnd)
                     }
                     
-                    // Sinon, vérifier si la tranche horaire est dans la plage de l'intervention
-                    const slotMinutes = timeToMinutes(slot)
-                    const startMinutes = intervStart.toDateString() === selectedDate.toDateString() 
-                      ? timeToMinutes(intervStart.toTimeString().slice(0, 5))
-                      : 0
-                    const endMinutes = intervEnd.toDateString() === selectedDate.toDateString()
-                      ? timeToMinutes(intervEnd.toTimeString().slice(0, 5))
-                      : 24 * 60
+                    const startIndex = visibleSlots.findIndex(slot => {
+                      const slotMinutes = timeToMinutes(slot)
+                      return slotMinutes >= startMinutes && slotMinutes < endMinutes
+                    })
                     
-                    return slotMinutes >= startMinutes && slotMinutes < endMinutes
+                    if (startIndex === -1) return
+                    
+                    const endIndex = visibleSlots.findIndex((slot, idx) => idx >= startIndex && timeToMinutes(slot) >= endMinutes)
+                    const finalEndIndex = endIndex === -1 ? visibleSlots.length : endIndex
+                    
+                    allEvents.push({
+                      id: interv.id,
+                      type: 'intervention',
+                      data: interv,
+                      startSlotIndex: startIndex,
+                      endSlotIndex: finalEndIndex
+                    })
                   })
-
-                  const hasActivity = affectationsSlot.length > 0 || interventionsSlot.length > 0
+                  
+                  // Vérifier si un slot contient des événements (pour le fond coloré)
+                  const slotHasEvent = (slot: string) => {
+                    return allEvents.some(evt => {
+                      const slotIndex = visibleSlots.indexOf(slot)
+                      return slotIndex >= evt.startSlotIndex && slotIndex < evt.endSlotIndex
+                    })
+                  }
+                  
+                  return (
+                    <>
+                      {/* Slots horaires */}
+                      <div className="space-y-1">
+                        {visibleSlots.map((slot, index) => {
+                  // Vérifier si ce slot contient des événements (pour le fond coloré uniquement)
+                  const hasActivity = slotHasEvent(slot)
                   const isQuarterHour = slot.endsWith(':00') || slot.endsWith(':30')
                   
-                  // Vérifier si l'horaire est dans une plage à griser
                   const slotMinutes = timeToMinutes(slot)
                   const isNightTime = slotMinutes >= timeToMinutes('20:00') || slotMinutes < timeToMinutes('06:00')
                   const isBreakTime = 
-                    (slotMinutes >= timeToMinutes('06:00') && slotMinutes < timeToMinutes('08:00')) || // 6h00 à 8h00
-                    (slotMinutes >= timeToMinutes('12:00') && slotMinutes < timeToMinutes('13:00')) || // 12h00 à 13h00
-                    (slotMinutes >= timeToMinutes('16:30') && slotMinutes < timeToMinutes('20:00')) // 16h30 à 20h00
+                    (slotMinutes >= timeToMinutes('06:00') && slotMinutes < timeToMinutes('08:00')) ||
+                    (slotMinutes >= timeToMinutes('12:00') && slotMinutes < timeToMinutes('13:00')) ||
+                    (slotMinutes >= timeToMinutes('16:30') && slotMinutes < timeToMinutes('20:00'))
+
+                  // Vérifier si un événement qui a commencé avant s'étend sur ce slot
+                  const slotIndex = visibleSlots.indexOf(slot)
+                  const slotHasExtendingEvent = allEvents.some(evt => {
+                    return slotIndex > evt.startSlotIndex && slotIndex < evt.endSlotIndex
+                  })
 
                   return (
                     <div
                       key={slot}
-                      className={`flex items-start gap-4 py-1 border-l-2 ${
+                      className={`flex items-start gap-4 py-1 border-l-2 relative ${
                         hasActivity 
                           ? 'border-primary-500 bg-primary-50' 
                           : isNightTime
@@ -1025,6 +1097,7 @@ export default function CalendrierPlanning({ user }: CalendrierPlanningProps) {
                                 ? 'border-gray-300' 
                                 : 'border-gray-200'
                       }`}
+                      style={{ minHeight: slotHasExtendingEvent ? '33px' : 'auto' }}
                     >
                       <div className={`w-20 text-xs font-medium ${
                         isNightTime
@@ -1037,56 +1110,120 @@ export default function CalendrierPlanning({ user }: CalendrierPlanningProps) {
                       }`}>
                         {slot}
                       </div>
-                      <div className="flex-1 space-y-1">
-                        {affectationsSlot.map(aff => (
-                          <div
-                            key={aff.id}
-                            className="text-xs p-2 bg-blue-100 border border-blue-200 rounded"
-                          >
-                            <div className="flex items-center gap-2">
-                              <Clock size={12} className="text-blue-600" />
-                              <span className="font-medium text-blue-900">
-                                {aff.salarie.prenom} {aff.salarie.nom}
-                              </span>
-                            </div>
-                            <div className="text-blue-700 mt-1">
-                              <Building2 size={10} className="inline mr-1" />
-                              {aff.chantier.nom}
-                            </div>
-                            {aff.heureDebut && aff.heureFin && (
-                              <div className="text-blue-600 text-xs mt-1">
-                                {aff.heureDebut} - {aff.heureFin}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                        {interventionsSlot.map(interv => (
-                          <div
-                            key={interv.id}
-                            className="text-xs p-2 bg-orange-100 border border-orange-200 rounded"
-                          >
-                            <div className="flex items-center gap-2">
-                              <Briefcase size={12} className="text-orange-600" />
-                              <span className="font-medium text-orange-900">
-                                {interv.titre}
-                              </span>
-                            </div>
-                            <div className="text-orange-700 mt-1">
-                              <Building2 size={10} className="inline mr-1" />
-                              {interv.chantier.nom}
-                            </div>
-                            {interv.responsable && (
-                              <div className="text-orange-600 text-xs mt-1">
-                                <User size={10} className="inline mr-1" />
-                                {interv.responsable.prenom} {interv.responsable.nom}
-                              </div>
-                            )}
-                          </div>
-                        ))}
+                      <div className="flex-1 relative">
+                        {/* Les événements sont maintenant rendus séparément en position absolue */}
                       </div>
                     </div>
                   )
-                })}
+                        })}
+                      </div>
+                
+                      {/* Événements positionnés absolument par rapport au conteneur parent */}
+                      {allEvents.length > 0 && allEvents.map(event => {
+                        // Calculer la position en tenant compte de space-y-1 (4px entre chaque slot)
+                        // py-1 = 4px top + 4px bottom = 8px
+                        // space-y-1 = 4px entre chaque slot (sauf le premier)
+                        // Hauteur minimale d'un slot = 8px (py) + ~25px (contenu) = ~33px
+                        // Avec space-y-1, chaque slot prend ~37px (33px + 4px d'espace)
+                        const baseSlotHeight = 33 // Hauteur de base d'un slot (py-1 + contenu min)
+                        const spaceBetween = 4 // space-y-1 = 4px
+                        const slotHeightWithSpace = baseSlotHeight + spaceBetween
+                        
+                        // Position top = index * (hauteur + espacement)
+                        const topPosition = event.startSlotIndex * slotHeightWithSpace
+                        
+                        // Calculer la hauteur totale
+                        const slotSpan = event.endSlotIndex - event.startSlotIndex
+                        const totalHeight = slotSpan * baseSlotHeight + (slotSpan - 1) * spaceBetween
+                        
+                        // Vérifier que les indices sont valides
+                        if (event.startSlotIndex < 0 || event.endSlotIndex <= event.startSlotIndex) {
+                          return null
+                        }
+                        
+                        return (
+                          <div
+                            key={event.id}
+                            className="absolute left-20 right-6 z-50"
+                            style={{
+                              top: `${topPosition}px`,
+                              height: `${totalHeight}px`,
+                              pointerEvents: 'auto',
+                              minHeight: '60px',
+                              // Debug: rendre visible pour vérifier
+                              backgroundColor: event.type === 'affectation' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(249, 115, 22, 0.1)'
+                            }}
+                          >
+                            <div className={`
+                              text-xs rounded-lg h-full 
+                              border-l-4 shadow-sm
+                              hover:shadow-md transition-all duration-200
+                              cursor-pointer
+                              ${event.type === 'affectation' 
+                                ? 'bg-gradient-to-r from-blue-50 to-blue-100/50 border-l-blue-500 border-r border-t border-b border-blue-200/50' 
+                                : 'bg-gradient-to-r from-orange-50 to-orange-100/50 border-l-orange-500 border-r border-t border-b border-orange-200/50'
+                              }
+                            `}
+                            style={{ padding: '8px 10px' }}
+                            title={event.type === 'affectation' 
+                              ? `${event.data.salarie.prenom} ${event.data.salarie.nom} - ${event.data.chantier.nom}`
+                              : `${event.data.titre} - ${event.data.chantier.nom}`
+                            }>
+                              {event.type === 'affectation' ? (
+                                <div className="space-y-1.5">
+                                  <div className="flex items-center gap-2">
+                                    <div className="p-1 bg-blue-500/10 rounded">
+                                      <Clock size={12} className="text-blue-600" />
+                                    </div>
+                                    <span className="font-semibold text-blue-900 leading-tight">
+                                      {event.data.salarie.prenom} {event.data.salarie.nom}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-1.5 text-blue-700/90 ml-7">
+                                    <Building2 size={11} className="text-blue-600/80 flex-shrink-0" />
+                                    <span className="truncate">{event.data.chantier.nom}</span>
+                                  </div>
+                                  {event.data.heureDebut && event.data.heureFin && (
+                                    <div className="flex items-center gap-1.5 text-blue-600/80 text-[11px] ml-7 font-medium">
+                                      <span>{event.data.heureDebut}</span>
+                                      <span className="text-blue-400">→</span>
+                                      <span>{event.data.heureFin}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="space-y-1.5">
+                                  <div className="flex items-center gap-2">
+                                    <div className="p-1 bg-orange-500/10 rounded">
+                                      <Briefcase size={12} className="text-orange-600" />
+                                    </div>
+                                    <span className="font-semibold text-orange-900 leading-tight truncate block">
+                                      {event.data.titre}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-1.5 text-orange-700/90 ml-7">
+                                    <Building2 size={11} className="text-orange-600/80 flex-shrink-0" />
+                                    <span className="truncate">{event.data.chantier.nom}</span>
+                                  </div>
+                                  {event.data.responsable && (
+                                    <div className="flex items-center gap-1.5 text-orange-600/80 ml-7">
+                                      <div className="p-0.5 bg-orange-500/10 rounded">
+                                        <User size={10} className="text-orange-600/80" />
+                                      </div>
+                                      <span className="text-[11px] truncate">
+                                        {event.data.responsable.prenom} {event.data.responsable.nom}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </>
+                  )
+                })()}
               </div>
             </div>
           </div>

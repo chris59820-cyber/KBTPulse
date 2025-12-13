@@ -11,6 +11,10 @@ interface MessageSecurite {
   imageUrl: string | null
   dateDebut: Date
   dateFin: Date | null
+  perimetre: {
+    id: string
+    nom: string
+  } | null
 }
 
 interface MessagesSecuriteSectionProps {
@@ -88,11 +92,14 @@ export default function MessagesSecuriteSection({ messages }: MessagesSecuriteSe
               )}
               <h3 className="font-bold text-lg mb-2">{topMessage.titre}</h3>
               <p className="text-sm font-medium mb-2">{topMessage.contenu}</p>
-              {topMessage.dateFin && (
-                <p className="text-xs opacity-75">
-                  Jusqu'au {formatDateTime(topMessage.dateFin)}
-                </p>
-              )}
+              <div className="flex items-center gap-4 text-xs opacity-75 mt-2">
+                {topMessage.perimetre && (
+                  <span>Périmètre: {topMessage.perimetre.nom}</span>
+                )}
+                {topMessage.dateFin && (
+                  <span>Jusqu'au {formatDateTime(topMessage.dateFin)}</span>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -127,11 +134,14 @@ export default function MessagesSecuriteSection({ messages }: MessagesSecuriteSe
                   <div className="flex-1">
                     <h3 className="font-semibold mb-1">{message.titre}</h3>
                     <p className="text-sm opacity-90">{message.contenu}</p>
-                    {message.dateFin && (
-                      <p className="text-xs mt-2 opacity-75">
-                        Jusqu'au {formatDateTime(message.dateFin)}
-                      </p>
-                    )}
+                    <div className="flex items-center gap-3 text-xs mt-2 opacity-75">
+                      {message.perimetre && (
+                        <span>Périmètre: {message.perimetre.nom}</span>
+                      )}
+                      {message.dateFin && (
+                        <span>Jusqu'au {formatDateTime(message.dateFin)}</span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
