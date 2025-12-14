@@ -5,7 +5,7 @@ import { getCurrentUser } from '@/lib/auth'
 // GET - Récupérer toutes les affectations d'une intervention
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
     const user = await getCurrentUser()
@@ -13,10 +13,9 @@ export async function GET(
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
     }
 
-    const { id } = await params
     const affectations = await prisma.affectationIntervention.findMany({
       where: {
-        interventionId: id,
+        interventionId: params.id,
         actif: true
       },
       include: {
@@ -50,7 +49,7 @@ export async function GET(
 // POST - Créer une nouvelle affectation
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
     const user = await getCurrentUser()
@@ -66,25 +65,19 @@ export async function POST(
       )
     }
 
-    const { id } = await params
     const body = await request.json()
-    const { salarieId, role } = body
+    const { salarieId, role, dateDebut, dateFin } = body
 
-    if (!salarieId || !role) {
+    if (!salarieId || !role || !dateDebut) {
       return NextResponse.json(
-        { error: 'salarieId et role sont requis' },
+        { error: 'salarieId, role et dateDebut sont requis' },
         { status: 400 }
       )
     }
 
-    // Vérifier que l'intervention existe et récupérer ses dates
+    // Vérifier que l'intervention existe
     const intervention = await prisma.intervention.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        dateDebut: true,
-        dateFin: true
-      }
+      where: { id: params.id }
     })
 
     if (!intervention) {
@@ -93,10 +86,6 @@ export async function POST(
         { status: 404 }
       )
     }
-
-    // Utiliser les dates de l'intervention
-    const dateDebut = intervention.dateDebut || new Date()
-    const dateFin = intervention.dateFin || null
 
     // Vérifier que le salarié existe
     const salarie = await prisma.salarie.findUnique({
@@ -111,10 +100,12 @@ export async function POST(
     }
 
     // Vérifier si une affectation existe déjà (même si inactive)
-    const existingAffectation = await prisma.affectationIntervention.findFirst({
+    const existingAffectation = await prisma.affectationIntervention.findUnique({
       where: {
-        interventionId: id,
-        salarieId: salarieId
+        interventionId_salarieId: {
+          interventionId: params.id,
+          salarieId: salarieId
+        }
       }
     })
 
@@ -126,8 +117,8 @@ export async function POST(
         where: { id: existingAffectation.id },
         data: {
           role,
-          dateDebut: dateDebut instanceof Date ? dateDebut : new Date(dateDebut),
-          dateFin: dateFin ? (dateFin instanceof Date ? dateFin : new Date(dateFin)) : null,
+          dateDebut: new Date(dateDebut),
+          dateFin: dateFin ? new Date(dateFin) : null,
           actif: true
         },
         include: {
@@ -148,11 +139,11 @@ export async function POST(
       // Créer une nouvelle affectation
       affectation = await prisma.affectationIntervention.create({
         data: {
-          interventionId: id,
+          interventionId: params.id,
           salarieId,
           role,
-          dateDebut: dateDebut instanceof Date ? dateDebut : new Date(dateDebut),
-          dateFin: dateFin ? (dateFin instanceof Date ? dateFin : new Date(dateFin)) : null
+          dateDebut: new Date(dateDebut),
+          dateFin: dateFin ? new Date(dateFin) : null
         },
         include: {
           salarie: {

@@ -100,11 +100,11 @@ export default async function AccueilPage() {
       <div className="flex-1 flex flex-col lg:ml-52">
         <Header title="Accueil" perimetres={perimetres} />
         
-        <main className="flex-1 overflow-y-auto p-6 bg-gray-50">
+        <main className="flex-1 overflow-y-auto p-6 bg-gray-50 relative">
           <div className="max-w-7xl mx-auto">
-            {/* Messages de sécurité */}
+            {/* Messages de sécurité - Positionné en haut à gauche */}
             {messagesSecurite.length > 0 && (
-              <div className="mb-6">
+              <div className="absolute top-6 left-6 z-10 max-w-md">
                 <MessagesSecuriteSection messages={messagesSecurite} />
               </div>
             )}
@@ -122,10 +122,6 @@ export default async function AccueilPage() {
                   conversations={conversations}
                   userId={user.id}
                 />
-                {/* Fallback si pas de messages prioritaires */}
-                {messagesSecurite.length === 0 && (
-                  <MessagesSecuriteSection messages={messagesSecurite} />
-                )}
               </div>
             </div>
 

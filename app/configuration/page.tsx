@@ -2,7 +2,8 @@ import SidebarWrapper from '@/components/SidebarWrapper'
 import Header from '@/components/Header'
 import { requireSpace } from '@/lib/middleware'
 import { prisma } from '@/lib/prisma'
-import { Settings, Users, Database } from 'lucide-react'
+import { Settings, Users, Shield, Database, Key, MapPin, Building2 } from 'lucide-react'
+import Link from 'next/link'
 
 export default async function ConfigurationPage() {
   const user = await requireSpace('CONFIGURATION')
@@ -82,12 +83,57 @@ export default async function ConfigurationPage() {
                 </span>
               </a>
 
-              <a href="/configuration/base-de-donnees" className="card hover:shadow-lg transition-shadow cursor-pointer">
+              <a href="/configuration/structure" className="card hover:shadow-lg transition-shadow cursor-pointer">
                 <div className="flex items-center gap-4 mb-4">
                   <div className="p-3 bg-primary-100 rounded-lg">
                     <svg className="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900">Structure organisationnelle</h3>
+                </div>
+                <p className="text-sm text-gray-600 mb-4">
+                  Créer et gérer la hiérarchie : Site, Unité, Secteur, Bâtiment, Étage
+                </p>
+                <span className="text-sm text-primary-600 hover:text-primary-700">
+                  Accéder →
+                </span>
+              </a>
+
+              <a href="/configuration/affectation" className="card hover:shadow-lg transition-shadow cursor-pointer">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="p-3 bg-primary-100 rounded-lg">
+                    <Shield className="text-primary-600" size={24} />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900">Affectation du personnel</h3>
+                </div>
+                <p className="text-sm text-gray-600 mb-4">
+                  Affecter le personnel sur les périmètres et définir les rôles
+                </p>
+                <span className="text-sm text-primary-600 hover:text-primary-700">
+                  Accéder →
+                </span>
+              </a>
+
+              <a href="/configuration/utilisateurs" className="card hover:shadow-lg transition-shadow cursor-pointer">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="p-3 bg-primary-100 rounded-lg">
+                    <Users className="text-primary-600" size={24} />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900">Gestion des utilisateurs</h3>
+                </div>
+                <p className="text-sm text-gray-600 mb-4">
+                  Créer, modifier et gérer les comptes utilisateurs et leurs rôles
+                </p>
+                <span className="text-sm text-primary-600 hover:text-primary-700">
+                  Accéder →
+                </span>
+              </a>
+
+              <a href="/configuration/base-de-donnees" className="card hover:shadow-lg transition-shadow cursor-pointer">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="p-3 bg-primary-100 rounded-lg">
+                    <Database className="text-primary-600" size={24} />
                   </div>
                   <h3 className="text-lg font-semibold text-gray-900">Administration Base de données</h3>
                 </div>

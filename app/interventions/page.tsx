@@ -2,10 +2,10 @@ import SidebarWrapper from '@/components/SidebarWrapper'
 import Header from '@/components/Header'
 import { requireAuth } from '@/lib/middleware'
 import { prisma } from '@/lib/prisma'
-import { Plus, Wrench } from 'lucide-react'
+import { formatDateTime } from '@/lib/utils'
+import { Plus, Wrench, Calendar, Building2, User, FileText, Briefcase } from 'lucide-react'
 import Link from 'next/link'
 import FiltresInterventions from '@/components/interventions/FiltresInterventions'
-import InterventionsList from '@/components/interventions/InterventionsList'
 
 interface PageProps {
   searchParams: Promise<{
@@ -61,9 +61,7 @@ export default async function InterventionsPage(props: PageProps) {
   if (searchParams.client || searchParams.numeroCommande) {
     where.chantier = {}
     if (searchParams.client) {
-      where.chantier.client = {
-        nom: { contains: searchParams.client }
-      }
+      where.chantier.client = { contains: searchParams.client }
     }
     if (searchParams.numeroCommande) {
       where.chantier.numeroCommande = { contains: searchParams.numeroCommande }
@@ -108,12 +106,7 @@ export default async function InterventionsPage(props: PageProps) {
     prisma.chantier.findMany({
       select: {
         id: true,
-        client: {
-          select: {
-            id: true,
-            nom: true
-          }
-        },
+        client: true,
         codeAffaire: {
           select: {
             id: true,
@@ -190,13 +183,7 @@ export default async function InterventionsPage(props: PageProps) {
               include: {
                 chantier: {
                   include: {
-                    codeAffaire: true,
-                    client: {
-                      select: {
-                        id: true,
-                        nom: true
-                      }
-                    }
+                    codeAffaire: true
                   }
                 },
                 salarie: true,
@@ -232,18 +219,11 @@ export default async function InterventionsPage(props: PageProps) {
               }
             }
       },
-      orderBy: [
-        {
-          intervention: {
-            ordre: 'asc'
-          }
-        },
-        {
-          intervention: {
-            createdAt: 'desc'
-          }
+      orderBy: {
+        intervention: {
+          createdAt: 'desc'
         }
-      ]
+      }
     })
 
     // Extraire les interventions des affectations
@@ -255,13 +235,7 @@ export default async function InterventionsPage(props: PageProps) {
       include: {
         chantier: {
           include: {
-            codeAffaire: true,
-            client: {
-              select: {
-                id: true,
-                nom: true
-              }
-            }
+            codeAffaire: true
           }
         },
         salarie: true,
@@ -295,10 +269,8 @@ export default async function InterventionsPage(props: PageProps) {
           }
         }
       },
-      orderBy: [
-        { ordre: 'asc' },
-        { createdAt: 'desc' }
-      ]
+      orderBy: { createdAt: 'desc' },
+      take: 100
     })
     }
     
@@ -329,18 +301,11 @@ export default async function InterventionsPage(props: PageProps) {
         
         <main className="flex-1 overflow-y-auto p-6">
   <div className="flex items-center justify-between mb-6">
-    <div>
-      <h2 className="text-2xl font-bold text-gray-900">
-        {user?.role === 'OUVRIER'
-          ? 'Mes interventions'
-          : 'Liste des interventions'}
-      </h2>
-      {interventions.length > 0 && (
-        <p className="text-sm text-gray-500 mt-1">
-          {interventions.length} intervention{interventions.length > 1 ? 's' : ''} trouvée{interventions.length > 1 ? 's' : ''}
-        </p>
-      )}
-    </div>
+    <h2 className="text-2xl font-bold text-gray-900">
+      {user?.role === 'OUVRIER'
+        ? 'Mes interventions'
+        : 'Liste des interventions'}
+    </h2>
 
     {user?.role !== 'OUVRIER' && (
       <Link
@@ -368,10 +333,97 @@ export default async function InterventionsPage(props: PageProps) {
     />
   )}
 
-          <InterventionsList 
-            interventions={interventions} 
-            canReorder={user?.role !== 'OUVRIER'}
-          />
+          <div className="space-y-4">
+            {interventions.map((intervention) => (
+              <Link
+                key={intervention.id}
+                href={`/interventions/${intervention.id}`}
+                className="card hover:shadow-lg transition-shadow cursor-pointer block"
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-start gap-4 flex-1">
+                    <div className="p-3 bg-primary-100 rounded-lg">
+                      <Wrench className="text-primary-600" size={24} />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="card-title mb-2">{intervention.titre}</h3>
+                      {intervention.description && (
+                        <p className="text-sm text-gray-600 mb-3">{intervention.description}</p>
+                      )}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                        <div className="flex items-center gap-2 text-gray-600">
+                          <Building2 size={16} />
+                          <span>{intervention.chantier.nom}</span>
+                        </div>
+                        {intervention.salarie && (
+                          <div className="flex items-center gap-2 text-gray-600">
+                            <User size={16} />
+                            <span>{intervention.salarie.prenom} {intervention.salarie.nom}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2 text-gray-600">
+                          <Calendar size={16} />
+                          <span>{intervention.dateDebut ? formatDateTime(intervention.dateDebut) : 'Non planifiée'}</span>
+                        </div>
+                      </div>
+                      {(intervention.codeAffaire || intervention.rdc) && (
+                        <div className="mt-3 flex items-center gap-4 flex-wrap text-sm">
+                          {intervention.codeAffaire && (
+                            <div className="flex items-center gap-2 text-gray-600">
+                              <FileText size={16} className="text-gray-400" />
+                              <span className="text-gray-500">Code affaire:</span>
+                              <span className="font-medium">{intervention.codeAffaire.code} - {intervention.codeAffaire.description}</span>
+                            </div>
+                          )}
+                          {intervention.rdc && (
+                            <div className="flex items-center gap-2 text-gray-600">
+                              <Briefcase size={16} className="text-gray-400" />
+                              <span className="text-gray-500">RDC:</span>
+                              <span className="font-medium">{intervention.rdc.prenom} {intervention.rdc.nom}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {intervention.duree && (
+                        <div className="text-sm text-gray-600 mt-2">
+                          Durée prévue: {intervention.duree}h
+                        </div>
+                      )}
+                      {intervention.affectationsIntervention && intervention.affectationsIntervention.length > 0 && (
+                        <div className="mt-3 flex items-center gap-2 flex-wrap">
+                          <span className="text-xs text-gray-500">Équipe:</span>
+                          {intervention.affectationsIntervention.slice(0, 5).map((aff: any) => (
+                            <span key={aff.id} className="badge badge-info text-xs">
+                              {aff.salarie.prenom} {aff.salarie.nom} ({aff.role === 'chef_equipe' ? 'Chef d\'équipe' : 'Ouvrier'})
+                            </span>
+                          ))}
+                          {intervention.affectationsIntervention.length > 5 && (
+                            <span className="text-xs text-gray-500">
+                              +{intervention.affectationsIntervention.length - 5} autre(s)
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <span className={`badge ${
+                    intervention.statut === 'terminee' ? 'badge-success' :
+                    intervention.statut === 'en_cours' ? 'badge-info' :
+                    intervention.statut === 'annulee' ? 'badge-danger' :
+                    intervention.statut === 'en_attente' ? 'badge-warning' :
+                    'badge-warning'
+                  }`}>
+                    {intervention.statut === 'planifiee' ? 'Planifiée' :
+                     intervention.statut === 'en_attente' ? 'En attente' :
+                     intervention.statut === 'en_cours' ? 'En cours' :
+                     intervention.statut === 'terminee' ? 'Terminée' :
+                     intervention.statut === 'annulee' ? 'Annulée' :
+                     intervention.statut.replace('_', ' ')}
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
 
           {interventions.length === 0 && (
             <div className="card text-center py-12">

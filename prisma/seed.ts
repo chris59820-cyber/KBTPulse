@@ -1,7 +1,11 @@
 import { PrismaClient } from '@prisma/client'
-import { hashPassword } from '../lib/auth'
+import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
+
+async function hashPassword(password: string): Promise<string> {
+  return bcrypt.hash(password, 10)
+}
 
 async function main() {
   console.log('🌱 Début du seed...')

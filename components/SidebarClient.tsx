@@ -156,7 +156,7 @@ export default function SidebarClient({ user }: SidebarClientProps) {
             </button>
           )}
           <p className="text-xs text-gray-400 text-center">
-            © 2024 KBTPulse
+            © 2026 KBTPulse
           </p>
         </div>
       </aside>

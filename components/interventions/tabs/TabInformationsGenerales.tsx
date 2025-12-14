@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { MapPin, Building2, Navigation, Calendar, Briefcase, Tag, User, Clock, Phone, Mail } from 'lucide-react'
+import { MapPin, Building2, Navigation, Calendar, Briefcase, Tag, User, Clock } from 'lucide-react'
 import { formatDate, formatDateTime } from '@/lib/utils'
 
 interface Intervention {
@@ -26,9 +26,6 @@ interface Intervention {
     prenom: string
     poste: string | null
   } | null
-  donneurOrdreNom: string | null
-  donneurOrdreTelephone: string | null
-  donneurOrdreEmail: string | null
 }
 
 interface TabInformationsGeneralesProps {
@@ -294,41 +291,6 @@ export default function TabInformationsGenerales({ intervention }: TabInformatio
                     <div>
                       <p className="text-sm text-gray-500 mb-1">Temps réellement passé</p>
                       <p className="text-gray-900 font-medium">{intervention.dureeReelle} heures</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {(intervention.donneurOrdreNom || intervention.donneurOrdreTelephone || intervention.donneurOrdreEmail) && (
-              <div className="border-t pt-4 mt-4">
-                <h4 className="text-md font-medium text-gray-900 mb-4">Contact du donneur d'ordre</h4>
-                <div className="space-y-3">
-                  {intervention.donneurOrdreNom && (
-                    <div className="flex items-start gap-3">
-                      <User className="text-gray-400 mt-1" size={20} />
-                      <div>
-                        <p className="text-sm text-gray-500 mb-1">Nom</p>
-                        <p className="text-gray-900 font-medium">{intervention.donneurOrdreNom}</p>
-                      </div>
-                    </div>
-                  )}
-                  {intervention.donneurOrdreTelephone && (
-                    <div className="flex items-start gap-3">
-                      <Phone className="text-gray-400 mt-1" size={20} />
-                      <div>
-                        <p className="text-sm text-gray-500 mb-1">Téléphone</p>
-                        <p className="text-gray-900 font-medium">{intervention.donneurOrdreTelephone}</p>
-                      </div>
-                    </div>
-                  )}
-                  {intervention.donneurOrdreEmail && (
-                    <div className="flex items-start gap-3">
-                      <Mail className="text-gray-400 mt-1" size={20} />
-                      <div>
-                        <p className="text-sm text-gray-500 mb-1">Email</p>
-                        <p className="text-gray-900 font-medium">{intervention.donneurOrdreEmail}</p>
-                      </div>
                     </div>
                   )}
                 </div>

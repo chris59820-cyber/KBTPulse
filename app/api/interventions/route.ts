@@ -95,14 +95,6 @@ export async function POST(request: NextRequest) {
 
     // Créer l'intervention en base
     const intervention = await prisma.$transaction(async (tx) => {
-      // Calculer l'ordre maximum pour la nouvelle intervention
-      const maxOrdre = await tx.intervention.aggregate({
-        _max: {
-          ordre: true
-        }
-      })
-      const newOrdre = (maxOrdre._max.ordre ?? -1) + 1
-
       const newIntervention = await tx.intervention.create({
         data: {
           titre,
@@ -127,8 +119,7 @@ export async function POST(request: NextRequest) {
           retexPositifs: retexPositifs && retexPositifs.trim() !== '' ? retexPositifs : null,
           retexNegatifs: retexNegatifs && retexNegatifs.trim() !== '' ? retexNegatifs : null,
           chantierId,
-          statut,
-          ordre: newOrdre
+          statut
         }
       })
 
@@ -136,11 +127,7 @@ export async function POST(request: NextRequest) {
       const affectationsJson = formData.get('affectations') as string
       if (affectationsJson) {
         try {
-          const affectations: Array<{ salarieId: string; role: string }> = JSON.parse(affectationsJson)
-          // Utiliser les dates de l'intervention pour les affectations
-          const dateDebutAffectation = newIntervention.dateDebut || new Date()
-          const dateFinAffectation = newIntervention.dateFin || null
-          
+          const affectations: Array<{ salarieId: string; role: string; dateDebut: string; dateFin?: string }> = JSON.parse(affectationsJson)
           for (const aff of affectations) {
             if (aff.salarieId) {
               await tx.affectationIntervention.create({
@@ -148,8 +135,8 @@ export async function POST(request: NextRequest) {
                   interventionId: newIntervention.id,
                   salarieId: aff.salarieId,
                   role: aff.role as any,
-                  dateDebut: dateDebutAffectation instanceof Date ? dateDebutAffectation : new Date(dateDebutAffectation),
-                  dateFin: dateFinAffectation ? (dateFinAffectation instanceof Date ? dateFinAffectation : new Date(dateFinAffectation)) : null
+                  dateDebut: new Date(aff.dateDebut),
+                  dateFin: aff.dateFin ? new Date(aff.dateFin) : null
                 }
               })
             }

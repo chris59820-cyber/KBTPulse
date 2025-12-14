@@ -60,26 +60,26 @@ export default function MessagesSecuriteSection({ messages }: MessagesSecuriteSe
   const otherMessages = sortedMessages.slice(1)
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Message principal en évidence */}
       <div className={`card border-2 ${typeColors[topMessage.type] || typeColors.info} shadow-lg`}>
-        <div className="flex items-start gap-3">
+        <div className="flex items-start gap-2">
           <div className="flex-shrink-0">
             {(() => {
               const Icon = typeIcons[topMessage.type] || AlertTriangle
-              return <Icon size={32} className="mt-1" />
+              return <Icon size={24} className="mt-1" />
             })()}
           </div>
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-2">
-              <h2 className="text-xl font-bold flex items-center gap-2">
-                <AlertTriangle size={24} />
+              <h2 className="text-lg font-bold flex items-center gap-2">
+                <AlertTriangle size={20} />
                 Messages de sécurité
               </h2>
             </div>
-            <div className={`p-4 rounded-lg border-2 ${typeColors[topMessage.type] || typeColors.info} bg-white/50`}>
+            <div className={`p-3 rounded-lg border-2 ${typeColors[topMessage.type] || typeColors.info} bg-white/50`}>
               {topMessage.imageUrl && (
-                <div className="mb-3 w-[250px] h-[250px] mx-auto rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
+                <div className="mb-2 w-full max-w-[200px] h-[150px] mx-auto rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
                   <img
                     src={topMessage.imageUrl}
                     alt={topMessage.titre}
@@ -90,9 +90,9 @@ export default function MessagesSecuriteSection({ messages }: MessagesSecuriteSe
                   />
                 </div>
               )}
-              <h3 className="font-bold text-lg mb-2">{topMessage.titre}</h3>
-              <p className="text-sm font-medium mb-2">{topMessage.contenu}</p>
-              <div className="flex items-center gap-4 text-xs opacity-75 mt-2">
+              <h3 className="font-bold text-base mb-1">{topMessage.titre}</h3>
+              <p className="text-xs font-medium mb-2 line-clamp-3">{topMessage.contenu}</p>
+              <div className="flex flex-col gap-1 text-xs opacity-75 mt-2">
                 {topMessage.perimetre && (
                   <span>Périmètre: {topMessage.perimetre.nom}</span>
                 )}
@@ -107,7 +107,7 @@ export default function MessagesSecuriteSection({ messages }: MessagesSecuriteSe
 
       {/* Autres messages */}
       {otherMessages.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="space-y-2">
           {otherMessages.map((message) => {
             const Icon = typeIcons[message.type] || Info
             const colorClass = typeColors[message.type] || typeColors.info
@@ -115,10 +115,10 @@ export default function MessagesSecuriteSection({ messages }: MessagesSecuriteSe
             return (
               <div
                 key={message.id}
-                className={`p-3 rounded-lg border ${colorClass}`}
+                className={`p-2 rounded-lg border ${colorClass}`}
               >
                 {message.imageUrl && (
-                  <div className="mb-3 w-[250px] h-[250px] mx-auto rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
+                  <div className="mb-2 w-full max-w-[150px] h-[100px] mx-auto rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
                     <img
                       src={message.imageUrl}
                       alt={message.titre}
@@ -130,13 +130,13 @@ export default function MessagesSecuriteSection({ messages }: MessagesSecuriteSe
                   </div>
                 )}
                 <div className="flex items-start gap-2">
-                  <Icon size={18} className="mt-0.5 flex-shrink-0" />
-                  <div className="flex-1">
-                    <h3 className="font-semibold mb-1">{message.titre}</h3>
-                    <p className="text-sm opacity-90">{message.contenu}</p>
-                    <div className="flex items-center gap-3 text-xs mt-2 opacity-75">
+                  <Icon size={16} className="mt-0.5 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-sm mb-1 truncate">{message.titre}</h3>
+                    <p className="text-xs opacity-90 line-clamp-2">{message.contenu}</p>
+                    <div className="flex flex-col gap-1 text-xs mt-1 opacity-75">
                       {message.perimetre && (
-                        <span>Périmètre: {message.perimetre.nom}</span>
+                        <span className="truncate">Périmètre: {message.perimetre.nom}</span>
                       )}
                       {message.dateFin && (
                         <span>Jusqu'au {formatDateTime(message.dateFin)}</span>

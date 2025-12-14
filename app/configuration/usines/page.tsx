@@ -11,7 +11,10 @@ export default async function ConfigurationUsinesPage() {
   const usines = await prisma.usine.findMany({
     include: {
       perimetre: true,
-      structures: true
+      accueilsRequis: true,
+      formationsRequis: true,
+      documentsAcces: true,
+      equipementsSpecifiques: true
     },
     orderBy: { nom: 'asc' }
   })

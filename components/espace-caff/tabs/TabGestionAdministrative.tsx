@@ -31,13 +31,12 @@ interface Conge {
 interface CodeAffaire {
   id: string
   code: string
-  libelle: string
   description: string | null
-  client: string | null
+  client: {
+    id: string
+    nom: string
+  } | null
   activite: string | null
-  budget: number | null
-  dateDebut: Date | null
-  dateFin: Date | null
   actif: boolean
   codeContrat: boolean
   rdcId: string | null
@@ -75,13 +74,9 @@ export default function TabGestionAdministrative({ user }: TabGestionAdministrat
   const [activeView, setActiveView] = useState<'conges' | 'codes'>('conges')
   const [formData, setFormData] = useState({
     code: '',
-    libelle: '',
     description: '',
     client: '',
     activite: '',
-    budget: '',
-    dateDebut: '',
-    dateFin: '',
     rdcId: '',
     actif: true,
     codeContrat: false
@@ -145,13 +140,9 @@ export default function TabGestionAdministrative({ user }: TabGestionAdministrat
     setEditingCodeId(code.id)
     setFormData({
       code: code.code,
-      libelle: code.libelle,
       description: code.description || '',
-      client: code.client || '',
+      client: code.client?.nom || '',
       activite: code.activite || '',
-      budget: code.budget ? code.budget.toString() : '',
-      dateDebut: code.dateDebut ? new Date(code.dateDebut).toISOString().split('T')[0] : '',
-      dateFin: code.dateFin ? new Date(code.dateFin).toISOString().split('T')[0] : '',
       rdcId: code.rdcId || '',
       actif: code.actif,
       codeContrat: code.codeContrat || false
@@ -168,13 +159,9 @@ export default function TabGestionAdministrative({ user }: TabGestionAdministrat
     setShowCodeForm(false)
     setFormData({
       code: '',
-      libelle: '',
       description: '',
       client: '',
       activite: '',
-      budget: '',
-      dateDebut: '',
-      dateFin: '',
       rdcId: '',
       actif: true,
       codeContrat: false
@@ -194,9 +181,8 @@ export default function TabGestionAdministrative({ user }: TabGestionAdministrat
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           code: formData.code,
-          libelle: formData.libelle,
-          description: formData.description,
-          client: formData.client,
+          description: formData.description || null,
+          client: formData.client || null,
           activite: formData.activite || null,
           rdcId: formData.rdcId || null,
           actif: formData.actif,
@@ -293,15 +279,14 @@ export default function TabGestionAdministrative({ user }: TabGestionAdministrat
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Libellé *
+                  Description
                 </label>
                 <input
                   type="text"
-                  required
-                  value={formData.libelle}
-                  onChange={(e) => setFormData({ ...formData, libelle: e.target.value })}
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   className="input"
-                  placeholder="Nom du code affaire"
+                  placeholder="Description du code affaire"
                 />
               </div>
 
@@ -580,9 +565,11 @@ export default function TabGestionAdministrative({ user }: TabGestionAdministrat
                         </h5>
                         <Edit size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                       </div>
-                      <p className="text-sm text-gray-600 mb-2">{code.libelle || code.description || '-'}</p>
+                      {code.description && (
+                        <p className="text-sm text-gray-600 mb-2">{code.description}</p>
+                      )}
                       {code.client && (
-                        <p className="text-xs text-gray-500 mb-1">Client: {code.client}</p>
+                        <p className="text-xs text-gray-500 mb-1">Client: {code.client.nom}</p>
                       )}
                       {code.activite && (
                         <p className="text-xs text-gray-500 mb-1">Activité: {formatActivite(code.activite)}</p>
@@ -590,6 +577,11 @@ export default function TabGestionAdministrative({ user }: TabGestionAdministrat
                       {code.rdc && (
                         <p className="text-xs text-gray-500 mb-1">
                           RDC: {code.rdc.prenom} {code.rdc.nom}
+                        </p>
+                      )}
+                      {code.budget && (
+                        <p className="text-xs text-gray-500 mb-1">
+                          Budget: {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(code.budget)}
                         </p>
                       )}
                       {code.description && (
@@ -600,6 +592,12 @@ export default function TabGestionAdministrative({ user }: TabGestionAdministrat
                       <span className="badge badge-success text-xs pointer-events-none">Actif</span>
                     )}
                   </div>
+
+                  {code.dateDebut && code.dateFin && (
+                    <div className="text-xs text-gray-500 mt-2">
+                      Du {formatDate(code.dateDebut)} au {formatDate(code.dateFin)}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

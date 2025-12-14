@@ -22,7 +22,7 @@ interface Pointage {
   } | null
   codeAffaire?: {
     code: string
-    libelle: string
+    description: string | null
   } | null
   date: Date
   heureArrivee: string | null

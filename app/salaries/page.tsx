@@ -3,7 +3,7 @@ import Header from '@/components/Header'
 import { requireAuth } from '@/lib/middleware'
 import { prisma } from '@/lib/prisma'
 import { formatDate } from '@/lib/utils'
-import { Plus, Mail, Phone, Briefcase, User } from 'lucide-react'
+import { Plus, Mail, Phone, Briefcase } from 'lucide-react'
 import Link from 'next/link'
 import PhotoSalarie from '@/components/salaries/PhotoSalarie'
 

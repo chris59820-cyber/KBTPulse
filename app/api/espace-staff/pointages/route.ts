@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
         codeAffaire: {
           select: {
             code: true,
-            libelle: true
+            description: true
           }
         }
       },

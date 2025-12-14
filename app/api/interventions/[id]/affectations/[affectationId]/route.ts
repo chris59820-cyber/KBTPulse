@@ -5,7 +5,7 @@ import { getCurrentUser } from '@/lib/auth'
 // PUT - Mettre à jour une affectation
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string, affectationId: string }> }
+  { params }: { params: { id: string, affectationId: string } }
 ) {
   try {
     const user = await getCurrentUser()
@@ -21,12 +21,11 @@ export async function PUT(
       )
     }
 
-    const { affectationId } = await params
     const body = await request.json()
     const { role, dateDebut, dateFin, actif } = body
 
     const affectation = await prisma.affectationIntervention.update({
-      where: { id: affectationId },
+      where: { id: params.affectationId },
       data: {
         ...(role && { role }),
         ...(dateDebut && { dateDebut: new Date(dateDebut) }),
@@ -61,7 +60,7 @@ export async function PUT(
 // DELETE - Supprimer (désactiver) une affectation
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string, affectationId: string }> }
+  { params }: { params: { id: string, affectationId: string } }
 ) {
   try {
     const user = await getCurrentUser()
@@ -77,10 +76,9 @@ export async function DELETE(
       )
     }
 
-    const { affectationId } = await params
     // Soft delete : marquer comme inactif
     const affectation = await prisma.affectationIntervention.update({
-      where: { id: affectationId },
+      where: { id: params.affectationId },
       data: {
         actif: false,
         dateFin: new Date()

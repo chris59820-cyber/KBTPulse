@@ -45,14 +45,7 @@ export async function GET(
       )
     }
 
-    // Formater la réponse pour correspondre à l'interface
-    const codeAffaireFormatted = {
-      ...codeAffaire,
-      libelle: codeAffaire.description,
-      client: codeAffaire.client?.nom || null
-    }
-
-    return NextResponse.json(codeAffaireFormatted)
+    return NextResponse.json(codeAffaire)
   } catch (error) {
     console.error('Error fetching code affaire:', error)
     return NextResponse.json(
@@ -77,9 +70,8 @@ export async function PUT(
       )
     }
 
-    const { id } = await params
     const body = await request.json()
-    const { code, libelle, description, client, activite, rdcId, actif, codeContrat } = body
+    const { code, description, client, activite, rdcId, actif, codeContrat } = body
 
     if (!code) {
       return NextResponse.json(
@@ -88,6 +80,8 @@ export async function PUT(
       )
     }
 
+    const { id } = await params
+    
     // Vérifier si le code existe déjà pour un autre code affaire
     const existingCode = await prisma.codeAffaire.findFirst({
       where: {
@@ -103,7 +97,7 @@ export async function PUT(
       )
     }
 
-    // Trouver le client par nom si fourni
+    // Trouver le clientId si un nom de client est fourni
     let clientId = null
     if (client) {
       const clientFound = await prisma.client.findFirst({
@@ -118,38 +112,16 @@ export async function PUT(
       where: { id },
       data: {
         code: code.toUpperCase(),
-        description: description || libelle || null,
+        description: description || null,
         clientId: clientId,
         activite: activite || null,
         rdcId: rdcId || null,
         codeContrat: codeContrat !== undefined ? codeContrat : false,
         actif: actif !== undefined ? actif : true
-      },
-      include: {
-        client: {
-          select: {
-            id: true,
-            nom: true
-          }
-        },
-        rdc: {
-          select: {
-            id: true,
-            nom: true,
-            prenom: true
-          }
-        }
       }
     })
 
-    // Formater la réponse pour correspondre à l'interface
-    const codeAffaireFormatted = {
-      ...codeAffaire,
-      libelle: codeAffaire.description,
-      client: codeAffaire.client?.nom || null
-    }
-
-    return NextResponse.json(codeAffaireFormatted)
+    return NextResponse.json(codeAffaire)
   } catch (error: any) {
     console.error('Error updating code affaire:', error)
     
@@ -167,12 +139,8 @@ export async function PUT(
       )
     }
 
-    const errorMessage = process.env.NODE_ENV === 'development' 
-      ? error.message || 'Erreur lors de la mise à jour du code affaire'
-      : 'Erreur lors de la mise à jour du code affaire'
-    
     return NextResponse.json(
-      { error: errorMessage },
+      { error: 'Erreur lors de la mise à jour du code affaire' },
       { status: 500 }
     )
   }

@@ -34,14 +34,7 @@ export async function GET(request: NextRequest) {
       orderBy: { code: 'asc' }
     })
 
-    // Transformer les données pour correspondre à l'interface attendue
-    const codesAffaireFormatted = codesAffaire.map((code) => ({
-      ...code,
-      libelle: code.description, // Mapper description vers libelle pour compatibilité
-      client: code.client?.nom || null
-    }))
-
-    return NextResponse.json(codesAffaireFormatted)
+    return NextResponse.json(codesAffaire)
   } catch (error) {
     console.error('Error fetching codes affaire:', error)
     return NextResponse.json(
@@ -64,7 +57,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { code, libelle, description, client, activite, rdcId, codeContrat } = body
+    const { code, description, client, activite, rdcId, codeContrat } = body
 
     if (!code) {
       return NextResponse.json(
@@ -73,7 +66,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Trouver le client par nom si fourni
+    // Trouver le clientId si un nom de client est fourni
     let clientId = null
     if (client) {
       const clientFound = await prisma.client.findFirst({
@@ -87,38 +80,16 @@ export async function POST(request: NextRequest) {
     const codeAffaire = await prisma.codeAffaire.create({
       data: {
         code: code.toUpperCase(),
-        description: description || libelle || null,
+        description: description || null,
         clientId: clientId,
         activite: activite || null,
         rdcId: rdcId || null,
-        codeContrat: codeContrat === true,
+        codeContrat: codeContrat === true || false,
         actif: true
-      },
-      include: {
-        client: {
-          select: {
-            id: true,
-            nom: true
-          }
-        },
-        rdc: {
-          select: {
-            id: true,
-            nom: true,
-            prenom: true
-          }
-        }
       }
     })
 
-    // Formater la réponse pour correspondre à l'interface
-    const codeAffaireFormatted = {
-      ...codeAffaire,
-      libelle: codeAffaire.description,
-      client: codeAffaire.client?.nom || null
-    }
-
-    return NextResponse.json(codeAffaireFormatted, { status: 201 })
+    return NextResponse.json(codeAffaire, { status: 201 })
   } catch (error: any) {
     console.error('Error creating code affaire:', error)
     

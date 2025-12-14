@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, User, Building2, Briefcase, ExternalLink, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, User, Building2, Briefcase, ExternalLink, X, Calendar, BookOpen, UserX } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 
 type ViewType = 'jour' | 'semaine' | 'mois'
@@ -60,6 +60,9 @@ export default function CalendrierPlanning({ user }: CalendrierPlanningProps) {
   const [formations, setFormations] = useState<any[]>([])
   const [salariesAbsents, setSalariesAbsents] = useState<any[]>([])
   const [loadingDayData, setLoadingDayData] = useState(false)
+  const [allConges, setAllConges] = useState<any[]>([])
+  const [allFormations, setAllFormations] = useState<any[]>([])
+  const [allSalariesAbsents, setAllSalariesAbsents] = useState<any[]>([])
 
   useEffect(() => {
     loadCalendarData()
@@ -86,6 +89,20 @@ export default function CalendrierPlanning({ user }: CalendrierPlanningProps) {
           dateDebut: new Date(i.dateDebut),
           dateFin: i.dateFin ? new Date(i.dateFin) : null
         })))
+        // Stocker les congés, formations et absences pour toute la plage
+        // Convertir les dates des congés en objets Date
+        const congesAvecDates = (data.conges || []).map((c: any) => ({
+          ...c,
+          dateDebut: new Date(c.dateDebut),
+          dateFin: new Date(c.dateFin)
+        }))
+        setAllConges(congesAvecDates)
+        // Convertir les dates des formations en objets Date
+        setAllFormations((data.formations || []).map((f: any) => ({
+          ...f,
+          dateFormation: new Date(f.dateFormation)
+        })))
+        setAllSalariesAbsents(data.salariesAbsents || [])
       }
     } catch (error) {
       console.error('Erreur lors du chargement:', error)
@@ -327,6 +344,53 @@ export default function CalendrierPlanning({ user }: CalendrierPlanningProps) {
     })
   }
 
+  // Fonction helper pour extraire uniquement la partie date (YYYY-MM-DD)
+  const getDateOnly = (dateValue: Date | string): string => {
+    let d: Date
+    if (typeof dateValue === 'string') {
+      const datePart = dateValue.split('T')[0]
+      const [y, m, d_val] = datePart.split('-').map(Number)
+      d = new Date(y, m - 1, d_val)
+    } else {
+      d = dateValue
+    }
+    const y = d.getFullYear()
+    const m = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    return `${y}-${m}-${day}`
+  }
+
+  const getCongesForDate = (date: Date) => {
+    if (!allConges || allConges.length === 0) {
+      return []
+    }
+    const dateStr = getDateOnly(date)
+    const result = allConges.filter(conge => {
+      if (!conge.dateDebut || !conge.dateFin) {
+        return false
+      }
+      const dateDebutStr = getDateOnly(conge.dateDebut)
+      const dateFinStr = getDateOnly(conge.dateFin)
+      const isInRange = dateStr >= dateDebutStr && dateStr <= dateFinStr
+      return isInRange
+    })
+    return result
+  }
+
+  const getFormationsForDate = (date: Date) => {
+    const dateStr = date.toDateString()
+    return allFormations.filter(formation => {
+      const formationDateStr = new Date(formation.dateFormation).toDateString()
+      return dateStr === formationDateStr
+    })
+  }
+
+  const getSalariesAbsentsForDate = (date: Date) => {
+    // Les absences sont permanentes (statut), donc on retourne tous les salariés absents
+    // On pourrait filtrer par date si nécessaire dans le futur
+    return allSalariesAbsents
+  }
+
   const formatViewTitle = () => {
     const monthNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
                         'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']
@@ -349,6 +413,9 @@ export default function CalendrierPlanning({ user }: CalendrierPlanningProps) {
   const renderJourView = () => {
     const affectationsJour = getAffectationsForDate(currentDate)
     const interventionsJour = getInterventionsForDate(currentDate)
+    const congesJour = getCongesForDate(currentDate)
+    const formationsJour = getFormationsForDate(currentDate)
+    const salariesAbsentsJour = getSalariesAbsentsForDate(currentDate)
     const isToday = currentDate.toDateString() === new Date().toDateString()
     const isWeekendOrHoliday = currentDate.getDay() === 0 || currentDate.getDay() === 6 || isHoliday(currentDate)
 
@@ -383,10 +450,82 @@ export default function CalendrierPlanning({ user }: CalendrierPlanningProps) {
             </div>
           </div>
 
-          {affectationsJour.length === 0 && interventionsJour.length === 0 ? (
+          {affectationsJour.length === 0 && interventionsJour.length === 0 && 
+           congesJour.length === 0 && formationsJour.length === 0 && salariesAbsentsJour.length === 0 ? (
             <p className="text-gray-500 text-center py-8">Aucune activité prévue</p>
           ) : (
             <div className="space-y-3">
+              {/* Congés */}
+              {congesJour.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="text-sm font-semibold text-gray-700 mb-2">Congés</h4>
+                  {congesJour.map((conge: any) => {
+                    const typeLabels: { [key: string]: string } = {
+                      'CP': 'Congés Payés',
+                      'RTT': 'RTT',
+                      'RC': 'Repos Compensateur',
+                      'RL': 'Repos Légal'
+                    }
+                    const typeColors: { [key: string]: string } = {
+                      'CP': 'bg-purple-50 border-purple-200 text-purple-700',
+                      'RTT': 'bg-indigo-50 border-indigo-200 text-indigo-700',
+                      'RC': 'bg-blue-50 border-blue-200 text-blue-700',
+                      'RL': 'bg-cyan-50 border-cyan-200 text-cyan-700'
+                    }
+                    return (
+                      <div key={conge.id} className={`p-3 ${typeColors[conge.type] || 'bg-gray-50 border-gray-200'} border rounded-lg`}>
+                        <div className="flex items-center gap-2">
+                          <Calendar className="flex-shrink-0" size={16} />
+                          <div className="flex-1">
+                            <div className="font-medium">{conge.salarie.prenom} {conge.salarie.nom}</div>
+                            <div className="text-xs mt-1">{typeLabels[conge.type] || conge.type}</div>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+
+              {/* Formations */}
+              {formationsJour.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="text-sm font-semibold text-gray-700 mb-2">Formations</h4>
+                  {formationsJour.map((formation: any) => (
+                    <div key={formation.id} className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <BookOpen className="text-green-600 flex-shrink-0" size={16} />
+                        <div className="flex-1">
+                          <div className="font-medium text-green-900">{formation.salarie.prenom} {formation.salarie.nom}</div>
+                          {formation.nomFormation && (
+                            <div className="text-xs text-green-700 mt-1">{formation.nomFormation}</div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Salariés absents */}
+              {salariesAbsentsJour.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="text-sm font-semibold text-gray-700 mb-2">Absents</h4>
+                  {salariesAbsentsJour.map((salarie: any) => (
+                    <div key={salarie.id} className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <UserX className="text-red-600 flex-shrink-0" size={16} />
+                        <div className="flex-1">
+                          <div className="font-medium text-red-900">{salarie.prenom} {salarie.nom}</div>
+                          <div className="text-xs text-red-700 mt-1">Statut: {salarie.statut}</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Affectations */}
               {affectationsJour.map(aff => (
                 <div key={aff.id} className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                   <div className="flex items-start gap-3">
@@ -413,6 +552,7 @@ export default function CalendrierPlanning({ user }: CalendrierPlanningProps) {
                 </div>
               ))}
 
+              {/* Interventions */}
               {interventionsJour.map(interv => (
                 <div key={interv.id} className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
                   <div className="flex items-start gap-3">
@@ -480,6 +620,9 @@ export default function CalendrierPlanning({ user }: CalendrierPlanningProps) {
           {days.map((date, index) => {
             const affectationsJour = getAffectationsForDate(date)
             const interventionsJour = getInterventionsForDate(date)
+            const congesJour = getCongesForDate(date)
+            const formationsJour = getFormationsForDate(date)
+            const salariesAbsentsJour = getSalariesAbsentsForDate(date)
             const isToday = date.toDateString() === new Date().toDateString()
             const isCurrentMonth = date.getMonth() === currentDate.getMonth()
             const isWeekendOrHoliday = date.getDay() === 0 || date.getDay() === 6 || isHoliday(date)
@@ -487,6 +630,10 @@ export default function CalendrierPlanning({ user }: CalendrierPlanningProps) {
                                      'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc']
             const dayNamesShort = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam']
             const yearShort = date.getFullYear().toString().slice(-2)
+
+            // Compter le total d'événements
+            const totalEvents = affectationsJour.length + interventionsJour.length + 
+                               congesJour.length + formationsJour.length + salariesAbsentsJour.length
 
             return (
               <div
@@ -509,6 +656,51 @@ export default function CalendrierPlanning({ user }: CalendrierPlanningProps) {
                   {dayNamesShort[date.getDay()]} {date.getDate()} {monthNamesShort[date.getMonth()]} {yearShort}
                 </div>
                 <div className="space-y-1">
+                  {/* Congés */}
+                  {congesJour.slice(0, 2).map((conge: any) => {
+                    const typeColors: { [key: string]: string } = {
+                      'CP': 'bg-purple-100 text-purple-800',
+                      'RTT': 'bg-indigo-100 text-indigo-800',
+                      'RC': 'bg-blue-100 text-blue-800',
+                      'RL': 'bg-cyan-100 text-cyan-800'
+                    }
+                    return (
+                      <div
+                        key={conge.id}
+                        className={`text-xs p-1 ${typeColors[conge.type] || 'bg-gray-100 text-gray-800'} rounded truncate`}
+                        title={`${conge.salarie.prenom} ${conge.salarie.nom} - ${conge.type}`}
+                      >
+                        <Calendar size={10} className="inline mr-1" />
+                        {conge.salarie.prenom} {conge.salarie.nom.charAt(0)}. ({conge.type})
+                      </div>
+                    )
+                  })}
+                  
+                  {/* Formations */}
+                  {formationsJour.slice(0, 2).map((formation: any) => (
+                    <div
+                      key={formation.id}
+                      className="text-xs p-1 bg-green-100 text-green-800 rounded truncate"
+                      title={`${formation.salarie.prenom} ${formation.salarie.nom} - Formation`}
+                    >
+                      <BookOpen size={10} className="inline mr-1" />
+                      {formation.salarie.prenom} {formation.salarie.nom.charAt(0)}. (Form.)
+                    </div>
+                  ))}
+
+                  {/* Absents */}
+                  {salariesAbsentsJour.slice(0, 1).map((salarie: any) => (
+                    <div
+                      key={salarie.id}
+                      className="text-xs p-1 bg-red-100 text-red-800 rounded truncate"
+                      title={`${salarie.prenom} ${salarie.nom} - ${salarie.statut}`}
+                    >
+                      <UserX size={10} className="inline mr-1" />
+                      {salarie.prenom} {salarie.nom.charAt(0)}. (Abs.)
+                    </div>
+                  ))}
+
+                  {/* Affectations */}
                   {affectationsJour.slice(0, 2).map(aff => (
                     <div
                       key={aff.id}
@@ -519,6 +711,8 @@ export default function CalendrierPlanning({ user }: CalendrierPlanningProps) {
                       {aff.salarie.prenom} {aff.salarie.nom.charAt(0)}.
                     </div>
                   ))}
+                  
+                  {/* Interventions */}
                   {interventionsJour.slice(0, 2).map(interv => (
                     <div
                       key={interv.id}
@@ -529,9 +723,10 @@ export default function CalendrierPlanning({ user }: CalendrierPlanningProps) {
                       {interv.titre.substring(0, 15)}...
                     </div>
                   ))}
-                  {(affectationsJour.length + interventionsJour.length) > 4 && (
+                  
+                  {totalEvents > 8 && (
                     <div className="text-xs text-gray-500">
-                      +{(affectationsJour.length + interventionsJour.length) - 4} autres
+                      +{totalEvents - 8} autres
                     </div>
                   )}
                 </div>
@@ -628,6 +823,9 @@ export default function CalendrierPlanning({ user }: CalendrierPlanningProps) {
                   const date = new Date(year, month, day)
                   const affectationsJour = getAffectationsForDate(date)
                   const interventionsJour = getInterventionsForDate(date)
+                  const congesJour = getCongesForDate(date)
+                  const formationsJour = getFormationsForDate(date)
+                  const salariesAbsentsJour = getSalariesAbsentsForDate(date)
                   const isToday = date.toDateString() === new Date().toDateString()
                   const isWeekendOrHoliday = date.getDay() === 0 || date.getDay() === 6 || isHoliday(date)
                   const isCurrentMonth = date.getMonth() === currentDate.getMonth()
@@ -635,6 +833,10 @@ export default function CalendrierPlanning({ user }: CalendrierPlanningProps) {
                                            'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc']
                   const dayNamesShort = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam']
                   const yearShort = date.getFullYear().toString().slice(-2)
+
+                  // Compter le total d'événements
+                  const totalEvents = affectationsJour.length + interventionsJour.length + 
+                                     congesJour.length + formationsJour.length + salariesAbsentsJour.length
 
                   return (
                     <div
@@ -659,7 +861,40 @@ export default function CalendrierPlanning({ user }: CalendrierPlanningProps) {
                         {dayNamesShort[date.getDay()]} {day} {monthNamesShort[date.getMonth()]} {yearShort}
                       </div>
                       <div className="space-y-0.5">
-                        {affectationsJour.slice(0, 2).map(aff => (
+                        {/* Congés */}
+                        {congesJour.slice(0, 1).map((conge: any) => {
+                          const typeColors: { [key: string]: string } = {
+                            'CP': 'bg-purple-100 text-purple-800',
+                            'RTT': 'bg-indigo-100 text-indigo-800',
+                            'RC': 'bg-blue-100 text-blue-800',
+                            'RL': 'bg-cyan-100 text-cyan-800'
+                          }
+                          return (
+                            <div
+                              key={conge.id}
+                              className={`text-xs p-0.5 ${typeColors[conge.type] || 'bg-gray-100 text-gray-800'} rounded truncate`}
+                              title={`${conge.salarie.prenom} ${conge.salarie.nom} - ${conge.type}`}
+                            >
+                              <Calendar size={8} className="inline mr-0.5" />
+                              {conge.salarie.prenom.charAt(0)}.{conge.salarie.nom.charAt(0)} ({conge.type})
+                            </div>
+                          )
+                        })}
+                        
+                        {/* Formations */}
+                        {formationsJour.slice(0, 1).map((formation: any) => (
+                          <div
+                            key={formation.id}
+                            className="text-xs p-0.5 bg-green-100 text-green-800 rounded truncate"
+                            title={`${formation.salarie.prenom} ${formation.salarie.nom} - Formation`}
+                          >
+                            <BookOpen size={8} className="inline mr-0.5" />
+                            {formation.salarie.prenom.charAt(0)}.{formation.salarie.nom.charAt(0)} (F)
+                          </div>
+                        ))}
+
+                        {/* Affectations */}
+                        {affectationsJour.slice(0, 1).map(aff => (
                           <div
                             key={aff.id}
                             className="text-xs p-0.5 bg-blue-100 text-blue-800 rounded truncate"
@@ -669,19 +904,19 @@ export default function CalendrierPlanning({ user }: CalendrierPlanningProps) {
                             {aff.salarie.prenom.charAt(0)}.{aff.salarie.nom.charAt(0)}
                           </div>
                         ))}
-                        {interventionsJour.slice(0, 2).map(interv => (
+                        {interventionsJour.slice(0, 1).map(interv => (
                           <div
                             key={interv.id}
                             className="text-xs p-0.5 bg-orange-100 text-orange-800 rounded truncate"
                             title={interv.titre}
                           >
                             <Briefcase size={8} className="inline mr-0.5" />
-                            {interv.titre.substring(0, 10)}...
+                            {interv.titre.substring(0, 8)}...
                           </div>
                         ))}
-                        {(affectationsJour.length + interventionsJour.length) > 4 && (
+                        {totalEvents > 4 && (
                           <div className="text-xs text-gray-500">
-                            +{(affectationsJour.length + interventionsJour.length) - 4}
+                            +{totalEvents - 4}
                           </div>
                         )}
                       </div>

@@ -92,9 +92,93 @@ export async function GET(request: NextRequest) {
       orderBy: { dateDebut: 'asc' }
     })
 
+    // Fonction helper pour extraire uniquement la partie date (YYYY-MM-DD)
+    const getDateOnly = (dateValue: Date | string): string => {
+      let d: Date
+      if (typeof dateValue === 'string') {
+        const datePart = dateValue.split('T')[0]
+        const [y, m, d_val] = datePart.split('-').map(Number)
+        d = new Date(y, m - 1, d_val)
+      } else {
+        d = dateValue
+      }
+      const y = d.getFullYear()
+      const m = String(d.getMonth() + 1).padStart(2, '0')
+      const day = String(d.getDate()).padStart(2, '0')
+      return `${y}-${m}-${day}`
+    }
+
+    // Convertir les dates de début et fin en strings pour la comparaison
+    const startDateStr = getDateOnly(startDate)
+    const endDateStr = getDateOnly(endDate)
+
+    // Récupérer TOUS les congés validés ou en attente dans la plage de dates
+    // On affiche les congés validés ET en attente pour une meilleure visibilité
+    const allConges = await prisma.conge.findMany({
+      where: {
+        statut: { in: ['valide', 'en_attente'] }
+      },
+      include: {
+        salarie: {
+          select: {
+            id: true,
+            nom: true,
+            prenom: true,
+            poste: true
+          }
+        }
+      }
+    })
+
+    // Filtrer les congés qui se chevauchent avec la plage de dates
+    const congesFiltered = allConges.filter(conge => {
+      const dateDebutStr = getDateOnly(conge.dateDebut)
+      const dateFinStr = getDateOnly(conge.dateFin)
+      
+      // Vérifier si la plage du congé se chevauche avec la plage demandée
+      return dateDebutStr <= endDateStr && dateFinStr >= startDateStr
+    })
+
+    // Récupérer les formations dans la plage de dates
+    const formations = await prisma.formationSalarie.findMany({
+      where: {
+        dateFormation: {
+          gte: startDate,
+          lte: endDate
+        }
+      },
+      include: {
+        salarie: {
+          select: {
+            id: true,
+            nom: true,
+            prenom: true,
+            poste: true
+          }
+        }
+      }
+    })
+
+    // Récupérer les salariés absents (statut = 'congé' ou 'inactif')
+    const salariesAbsents = await prisma.salarie.findMany({
+      where: {
+        statut: { in: ['congé', 'inactif'] }
+      },
+      select: {
+        id: true,
+        nom: true,
+        prenom: true,
+        poste: true,
+        statut: true
+      }
+    })
+
     return NextResponse.json({
       affectations,
-      interventions
+      interventions,
+      conges: congesFiltered,
+      formations,
+      salariesAbsents
     })
   } catch (error) {
     console.error('Error fetching calendar data:', error)
