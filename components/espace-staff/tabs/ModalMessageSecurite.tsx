@@ -129,13 +129,23 @@ export default function ModalMessageSecurite({
 
       const method = message?.id ? 'PUT' : 'POST'
 
+      // Préparer les dates correctement pour l'API
+      const dateDebut = formData.dateDebut 
+        ? new Date(formData.dateDebut + 'T00:00:00').toISOString()
+        : new Date().toISOString()
+      
+      const dateFin = formData.dateFin && formData.dateFin !== ''
+        ? new Date(formData.dateFin + 'T23:59:59').toISOString()
+        : null
+
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
           perimetreId: formData.perimetreId && formData.perimetreId !== '' ? formData.perimetreId : null,
-          dateFin: formData.dateFin && formData.dateFin !== '' ? formData.dateFin : null,
+          dateDebut: dateDebut,
+          dateFin: dateFin,
           imageUrl: formData.imageUrl && formData.imageUrl.trim() !== '' ? formData.imageUrl : null
         })
       })
